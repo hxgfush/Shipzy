@@ -212,21 +212,31 @@ public class Login extends javax.swing.JFrame {
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         try {
-            String username, password;
-            username = txtLogUsername.getText();
-            password = txtLogPassword.getText();
-            String queryLogin = "SELECT *from accountdetails where accUsername = " +username+ " AND accPassword = " +password+"";
-            pst = con.prepareStatement(queryLogin);
-            ResultSet rs = pst.executeQuery();
-            if(!rs.next()){
-               JOptionPane.showMessageDialog(null,"Invalid Credentials");
-            }
-            else{
-               JOptionPane.showMessageDialog(null,"Account Match"); 
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        String username, password;
+        username = txtLogUsername.getText();
+        password = txtLogPassword.getText();
+
+        // Modified query to select firstname and lastname
+        String queryLogin = "SELECT Firstname, Lastname FROM accountdetails WHERE accUsername = ? AND accPassword = ?";
+        PreparedStatement pst = con.prepareStatement(queryLogin);
+        pst.setString(1, username);
+        pst.setString(2, password);
+
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            // Retrieve firstname and lastname
+            String firstname = rs.getString("Firstname");
+            String lastname = rs.getString("Lastname");
+
+            // Show the message dialog with full name
+            JOptionPane.showMessageDialog(null, "Welcome, " + firstname + " " + lastname + "!");
+        } else {
+            JOptionPane.showMessageDialog(null, "Invalid Credentials");
         }
+    } catch (SQLException ex) {
+        Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+    }
         
     }//GEN-LAST:event_jButton1ActionPerformed
 

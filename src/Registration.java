@@ -11,6 +11,7 @@ import java.sql.Statement;
 import java.sql.Connection;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.sql.PreparedStatement;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import javax.swing.JFrame;
@@ -37,7 +38,7 @@ public class Registration extends javax.swing.JFrame {
      //DbName,DbDriver,Url,USername,Password
      private static final String DbName = "pointofsale";
      private static final String DbDriver = "com.mysql.cj.jdbc.Driver";
-     private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName;//instead of Concatenation i used the value directly
+     private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName; //instead of Concatenation i used the value directly
      private static final String DbUsername = "root";
      private static final String DbPassword = "";
      private static final String DbFirstname = "";
@@ -258,6 +259,12 @@ public class Registration extends javax.swing.JFrame {
         if ("".equals(txtRegUsername.getText())){
             JOptionPane.showMessageDialog(new JFrame(),"Required Username");
         }
+         if ("".equals(txtRegLastname.getText())){
+            JOptionPane.showMessageDialog(new JFrame(),"Required Lastname");
+        }
+        if ("".equals(txtRegFirstname.getText())){
+            JOptionPane.showMessageDialog(new JFrame(),"Required Lastname");
+        }
         if ("".equals(txtRegPassword.getText())){
             JOptionPane.showMessageDialog(new JFrame(),"Required Password");
         }
@@ -267,18 +274,22 @@ public class Registration extends javax.swing.JFrame {
             firstname = txtRegFirstname.getText();
             lastname = txtRegLastname.getText();
             
-            String queryRegister = "INSERT into accountdetails(accUsername, accPassword)" + 
-                    "VALUES ("+username+","+password+")";
-             try {
-                 st.execute(queryRegister);
-             } catch (SQLException ex) {
-                 Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
-             }
-             JOptionPane.showMessageDialog(new JFrame(),"Data added succesfuly");
-             txtRegUsername.setText("");
-             txtRegPassword.setText("");
-             txtRegFirstname.setText("");
-             txtRegLastname.setText("");
+            String queryRegister = "INSERT INTO accountdetails(accUsername, accPassword, Firstname, Lastname) VALUES (?, ?, ?, ?)";
+
+try (PreparedStatement pst = con.prepareStatement(queryRegister)) {
+                              pst.setString(1, username);
+                              pst.setString(2, password);
+                              pst.setString(3, firstname);
+                              pst.setString(4, lastname);
+                              pst.executeUpdate();
+                           JOptionPane.showMessageDialog(new JFrame(), "Data added successfully");
+                           txtRegUsername.setText(" ");
+                           txtRegPassword.setText(" ");
+                           txtRegFirstname.setText(" ");
+                           txtRegLastname.setText(" ");
+                          } catch (SQLException ex) {
+                    Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
+            }
         }
                     
     }//GEN-LAST:event_jButtonConfirmActionPerformed
