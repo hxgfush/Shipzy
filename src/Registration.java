@@ -258,15 +258,19 @@ public class Registration extends javax.swing.JFrame {
          String username, password, firstname, lastname;
         if ("".equals(txtRegUsername.getText())){
             JOptionPane.showMessageDialog(new JFrame(),"Required Username");
+            return;           
         }
          if ("".equals(txtRegLastname.getText())){
             JOptionPane.showMessageDialog(new JFrame(),"Required Lastname");
+            return;
         }
         if ("".equals(txtRegFirstname.getText())){
-            JOptionPane.showMessageDialog(new JFrame(),"Required Lastname");
+            JOptionPane.showMessageDialog(new JFrame(),"Required Firstname");
+            return;
         }
         if ("".equals(txtRegPassword.getText())){
             JOptionPane.showMessageDialog(new JFrame(),"Required Password");
+            return;
         }
         else{
             username = txtRegUsername.getText();
@@ -276,7 +280,7 @@ public class Registration extends javax.swing.JFrame {
             
             String queryRegister = "INSERT INTO accountdetails(accUsername, accPassword, Firstname, Lastname) VALUES (?, ?, ?, ?)";
 
-try (PreparedStatement pst = con.prepareStatement(queryRegister)) {
+try (PreparedStatement pst = con.prepareStatement(queryRegister)){
                               pst.setString(1, username);
                               pst.setString(2, password);
                               pst.setString(3, firstname);
