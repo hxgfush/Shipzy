@@ -42,9 +42,9 @@ public class Login extends javax.swing.JFrame {
      PreparedStatement pst;
      //Required for Connections
      //DbName,DbDriver,Url,USername,Password
-     private static final String DbName = "pointofsale";
+     private static final String DbName = "shipzy";
      private static final String DbDriver = "com.mysql.cj.jdbc.Driver";
-     private static final String DbUrl = "jdbc:mysql://localhost:3306/pointofsale";//instead of Concatenation i used the value directly
+     private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName;//instead of Concatenation i used the value directly
      private static final String DbUsername = "root";
      private static final String DbPassword = "";
      
@@ -78,10 +78,10 @@ public class Login extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         txtLogUsername = new javax.swing.JTextField();
-        txtLogPassword = new javax.swing.JTextField();
         jButton1 = new javax.swing.JButton();
         Register = new javax.swing.JButton();
         jLabel4 = new javax.swing.JLabel();
+        txtLogPassword = new javax.swing.JPasswordField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -101,14 +101,6 @@ public class Login extends javax.swing.JFrame {
 
         txtLogUsername.setBackground(new java.awt.Color(255, 255, 255));
         txtLogUsername.setForeground(new java.awt.Color(0, 0, 0));
-
-        txtLogPassword.setBackground(new java.awt.Color(255, 255, 255));
-        txtLogPassword.setForeground(new java.awt.Color(0, 0, 0));
-        txtLogPassword.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtLogPasswordActionPerformed(evt);
-            }
-        });
 
         jButton1.setBackground(new java.awt.Color(0, 51, 0));
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
@@ -132,6 +124,14 @@ public class Login extends javax.swing.JFrame {
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
         jLabel4.setText("Don't Have an Account?");
 
+        txtLogPassword.setBackground(new java.awt.Color(255, 255, 255));
+        txtLogPassword.setForeground(new java.awt.Color(0, 0, 0));
+        txtLogPassword.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtLogPasswordActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -151,8 +151,8 @@ public class Login extends javax.swing.JFrame {
                                     .addComponent(jLabel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                    .addComponent(txtLogPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
-                                    .addComponent(txtLogUsername)))
+                                    .addComponent(txtLogUsername, javax.swing.GroupLayout.DEFAULT_SIZE, 305, Short.MAX_VALUE)
+                                    .addComponent(txtLogPassword)))
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -168,17 +168,19 @@ public class Login extends javax.swing.JFrame {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                     .addComponent(jLabel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addComponent(txtLogUsername, javax.swing.GroupLayout.DEFAULT_SIZE, 33, Short.MAX_VALUE))
-                .addGap(22, 22, 22)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                .addGap(26, 26, 26)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addComponent(jLabel3)
-                    .addComponent(txtLogPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(18, 18, 18)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(1, 1, 1)
+                        .addComponent(txtLogPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 32, Short.MAX_VALUE)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jButton1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(Register)
                     .addComponent(jLabel4))
-                .addContainerGap(206, Short.MAX_VALUE))
+                .addGap(211, 211, 211))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -206,15 +208,12 @@ public class Login extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void txtLogPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtLogPasswordActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtLogPasswordActionPerformed
-
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         try {
         String username, password;
         username = txtLogUsername.getText();
-        password = txtLogPassword.getText();
+        char[] passwordChars  = txtLogPassword.getPassword();
+        password = new String(passwordChars);
 
         // Modified query to select firstname and lastname
         String queryLogin = "SELECT Firstname, Lastname FROM accountdetails WHERE accUsername = ? AND accPassword = ?";
@@ -249,6 +248,10 @@ public class Login extends javax.swing.JFrame {
         this.dispose();
         
     }//GEN-LAST:event_RegisterActionPerformed
+
+    private void txtLogPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtLogPasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtLogPasswordActionPerformed
 
     /**
      * @param args the command line arguments
@@ -294,7 +297,7 @@ public class Login extends javax.swing.JFrame {
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JTextField txtLogPassword;
+    private javax.swing.JPasswordField txtLogPassword;
     private javax.swing.JTextField txtLogUsername;
     // End of variables declaration//GEN-END:variables
 }

@@ -36,13 +36,11 @@ public class Registration extends javax.swing.JFrame {
      
      //Required for Connections
      //DbName,DbDriver,Url,USername,Password
-     private static final String DbName = "pointofsale";
+     private static final String DbName = "shipzy";
      private static final String DbDriver = "com.mysql.cj.jdbc.Driver";
      private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName; //instead of Concatenation i used the value directly
      private static final String DbUsername = "root";
      private static final String DbPassword = "";
-     private static final String DbFirstname = "";
-     private static final String DbLastname = "";
      
      //Create a method for connections 
      public void Connection() throws SQLException{
@@ -293,18 +291,19 @@ try (PreparedStatement pst = con.prepareStatement(queryRegister)){
                            txtRegLastname.setText(" ");
                           } catch (SQLException ex) {
                     Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
+                    JOptionPane.showMessageDialog(new JFrame(), "Account is alredy registerd");
             }
         }
                     
     }//GEN-LAST:event_jButtonConfirmActionPerformed
 
-    private void txtRegPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtRegPasswordActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtRegPasswordActionPerformed
-
     private void txtRegFirstnameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtRegFirstnameActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_txtRegFirstnameActionPerformed
+
+    private void txtRegPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtRegPasswordActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtRegPasswordActionPerformed
 
     /**
      * @param args the command line arguments
