@@ -1,3 +1,17 @@
+import java.sql.DriverManager;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import javax.swing.JOptionPane;
+
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
@@ -13,8 +27,40 @@ public class SellerHopIn extends javax.swing.JFrame {
      * Creates new form SellerHopIn
      */
     public SellerHopIn() {
-        initComponents();
+           initComponents();
+        try {
+            Connection();
+        } catch (SQLException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
+//onnection method
+     Connection con;
+     //SQLstatement
+     Statement st;
+     //Prepared Statement 
+     PreparedStatement pst;
+     //Required for Connections
+     //DbName,DbDriver,Url,USername,Password
+     private static final String DbName = "shipzy";
+     private static final String DbDriver = "com.mysql.cj.jdbc.Driver";
+     private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName;//instead of Concatenation i used the value directly
+     private static final String DbUsername = "root";
+     private static final String DbPassword = "";
+     
+     //Create a method for connections 
+     public void Connection()throws SQLException{
+        try {
+            con = DriverManager.getConnection(DbUrl,DbUsername,DbPassword);
+            st = con.createStatement();
+            if (con != null){
+                System.out.println("Connection Successful");
+            }
+            Class.forName(DbDriver);
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Registration.class.getName()).log(Level.SEVERE, null, ex);
+        }
+     }
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -25,8 +71,16 @@ public class SellerHopIn extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        jSpinner1 = new javax.swing.JSpinner();
         jPanel1 = new javax.swing.JPanel();
         jPanel2 = new javax.swing.JPanel();
+        txtHopStorename = new javax.swing.JTextField();
+        txtHopSellerid = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        jLabel3 = new javax.swing.JLabel();
+        Register = new javax.swing.JLabel();
+        jButton1 = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -34,15 +88,92 @@ public class SellerHopIn extends javax.swing.JFrame {
 
         jPanel2.setBackground(new java.awt.Color(52, 70, 49));
 
+        txtHopStorename.setBackground(new java.awt.Color(255, 255, 255));
+        txtHopStorename.setForeground(new java.awt.Color(0, 0, 0));
+        txtHopStorename.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtHopStorenameActionPerformed(evt);
+            }
+        });
+
+        txtHopSellerid.setBackground(new java.awt.Color(255, 255, 255));
+        txtHopSellerid.setForeground(new java.awt.Color(0, 0, 0));
+        txtHopSellerid.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                txtHopSelleridActionPerformed(evt);
+            }
+        });
+
+        jLabel1.setFont(new java.awt.Font("Irish Grover", 0, 24)); // NOI18N
+        jLabel1.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel1.setText("Be a part of Shipzy");
+
+        jLabel2.setFont(new java.awt.Font("Inknut Antiqua", 0, 8)); // NOI18N
+        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel2.setText("Store Name:");
+
+        jLabel3.setFont(new java.awt.Font("Inknut Antiqua", 0, 8)); // NOI18N
+        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel3.setText("Seller ID:");
+
+        Register.setFont(new java.awt.Font("Inknut Antiqua", 0, 8)); // NOI18N
+        Register.setForeground(new java.awt.Color(255, 255, 255));
+        Register.setText("Not Registerd yet?");
+        Register.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        Register.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                RegisterMouseClicked(evt);
+            }
+        });
+
+        jButton1.setBackground(new java.awt.Color(69, 125, 88));
+        jButton1.setFont(new java.awt.Font("Inknut Antiqua", 0, 8)); // NOI18N
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
+        jButton1.setText("Hop In");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 350, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(59, 59, 59)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addComponent(Register)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
+                        .addComponent(jButton1))
+                    .addComponent(txtHopSellerid)
+                    .addComponent(jLabel3)
+                    .addComponent(jLabel2)
+                    .addComponent(txtHopStorename)
+                    .addGroup(jPanel2Layout.createSequentialGroup()
+                        .addGap(30, 30, 30)
+                        .addComponent(jLabel1)))
+                .addContainerGap(58, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 437, Short.MAX_VALUE)
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 45, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(38, 38, 38)
+                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtHopStorename, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 15, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(txtHopSellerid, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(Register)
+                    .addComponent(jButton1))
+                .addContainerGap(184, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
@@ -52,7 +183,7 @@ public class SellerHopIn extends javax.swing.JFrame {
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGap(288, 288, 288)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(288, Short.MAX_VALUE))
+                .addContainerGap(231, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -75,6 +206,63 @@ public class SellerHopIn extends javax.swing.JFrame {
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void txtHopStorenameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtHopStorenameActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtHopStorenameActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+        try {
+            String storename, sellerid;
+            storename = txtHopStorename.getText();
+            sellerid  = txtHopSellerid.getText();
+
+            // Modified query to select firstname and lastname
+            String queryLogin = "SELECT * FROM sellermanager WHERE Storename = ? AND Sellerid = ?";
+            PreparedStatement pst = con.prepareStatement(queryLogin);
+            pst.setString(1, storename);
+            pst.setString(2, sellerid);
+
+            ResultSet rs = pst.executeQuery();
+                 if (rs.next()) {
+                    String Storename = rs.getString("Storename");
+                    String Name = rs.getString("Name");
+            
+                                // Corrected condition using && instead of &
+                         if (Storename != null && Name != null) {
+                                   // Pass both values to SellerPage
+                                   var seller = new SellerPage(storename, Name);  
+                                   seller.setVisible(true);
+                                   this.dispose();
+                                 } else {
+                                 JOptionPane.showMessageDialog(null, "Store name or seller name not found in database!");    
+                                 } 
+                          } else {
+                         JOptionPane.showMessageDialog(null, "Invalid Credentials");
+                         }
+        
+                          // Close resources
+                        rs.close();
+                        pst.close();
+                    } catch (SQLException ex) {
+                    Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+                    JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage());
+                }               
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void RegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_RegisterMouseClicked
+        // TODO add your handling code here:
+        var register = new SellerRegistration();
+        register.setVisible(true);
+        register.pack();
+        register.setLocationRelativeTo(null);
+        this.dispose();
+    }//GEN-LAST:event_RegisterMouseClicked
+
+    private void txtHopSelleridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtHopSelleridActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_txtHopSelleridActionPerformed
 
     /**
      * @param args the command line arguments
@@ -112,7 +300,15 @@ public class SellerHopIn extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JLabel Register;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
+    private javax.swing.JSpinner jSpinner1;
+    private javax.swing.JTextField txtHopSellerid;
+    private javax.swing.JTextField txtHopStorename;
     // End of variables declaration//GEN-END:variables
 }
