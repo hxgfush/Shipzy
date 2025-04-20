@@ -29,8 +29,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 import java.sql.Statement;
-import java.sql.Connection;
-import java.text.SimpleDateFormat;
+import java.sql.Connection;         /*This the import section which get the fumctoionality from the libraries */
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -40,14 +39,12 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
 
 
-public class SellerPage extends javax.swing.JFrame {
-
+public class SellerPage extends javax.swing.JFrame {    /*This the is the sellerPage class*/
     private final String storename;
     private final String Name;
 
@@ -58,10 +55,10 @@ public class SellerPage extends javax.swing.JFrame {
         initComponents();
          this.storename = storename;
         jLabel3.setText(storename); 
-        jLabel3.setText(this.storename != null ? this.storename : "Unnamed Store");
+        jLabel3.setText(this.storename != null ? this.storename : "Unnamed Store");  /*This is used to display the storename when enterimg the frame*/
         this.Name = Name;
         owberLabel.setText(Name); 
-        owberLabel.setText(this.Name != null ? this.Name : "Unnamed Store");
+        owberLabel.setText(this.Name != null ? this.Name : "Unnamed Store");  /*This is used to display the store owner name when enterimg the frame*/
         try {
             getConnection();
             displayProductCards();
@@ -70,20 +67,20 @@ public class SellerPage extends javax.swing.JFrame {
         }
     }
     
-    Connection con;
+    Connection con;   /*This block of code is used to initiate connection to the databse*/
     
-    private static final String DbName = "Shipzy";
+    private static final String DbName = "shipzy";
     private static final String DbDriver = "com.mysql.cj.jdbc.Driver";
-    private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName;
+    private static final String DbUrl = "jdbc:mysql://localhost:3306/"+DbName;     
     private static final String DbUsername = "root";
     private static final String DbPassword = "";
 
     
-  private Connection getConnection() throws SQLException {
+  private Connection getConnection() throws SQLException {  /*This block of code is a method to connect to the databse*/
     if (con == null || con.isClosed()) {
         try {
             Class.forName(DbDriver);
-            con = DriverManager.getConnection(DbUrl, DbUsername, DbPassword);
+            con = DriverManager.getConnection(DbUrl, DbUsername, DbPassword);    
         } catch (ClassNotFoundException e) {
             throw new SQLException("Database driver not found", e);
         }
@@ -91,7 +88,7 @@ public class SellerPage extends javax.swing.JFrame {
     return con;
 }
 
-    private void refreshCard(JPanel card, Product product) {
+    private void refreshCard(JPanel card, Product product) {  //This block of code is used to refresh cards that display the product
     // Remove all components from the card
     card.removeAll();
     
@@ -108,7 +105,7 @@ public class SellerPage extends javax.swing.JFrame {
     card.repaint();
 }
   
- public class WrapLayout extends FlowLayout {
+ public class WrapLayout extends FlowLayout { //This block of code is used to arange the card
     
     public WrapLayout() {
         super();
@@ -184,8 +181,8 @@ public class SellerPage extends javax.swing.JFrame {
     private String productName;
     private String tagline;
     private double price;
-    private byte[] image1;  // For storing binary image data
-    private byte[] image2;
+    private final byte[] image1;  // For storing binary image data
+    private final byte[] image2;
     
     public Product(String productName, String tagline, double price, 
                   byte[] image1, byte[] image2) {
@@ -240,7 +237,7 @@ public class ProductDAO {
         this.con = con;
     }
     
-    public List<Product> getAllProducts() throws SQLException {
+    public List<Product> getAllProducts() throws SQLException { /* now this function is used to initiate the selection of data in the data base */
     List<Product> products = new ArrayList<>();
     String query = "SELECT product_id, product_name, tagline, price, image1, image2 FROM products";
     
@@ -255,7 +252,7 @@ public class ProductDAO {
                 rs.getDouble("price"),
                 rs.getBytes("image1"),
                 rs.getBytes("image2")
-            );
+);
             products.add(product);
         }
     }
@@ -263,7 +260,7 @@ public class ProductDAO {
 }
 }
 
-private void displayProductCards() {
+private void displayProductCards() { //This function is used for displaying the card
     try {
         jTabbedPane2.removeAll();
         jTabbedPane2.addTab("Products", new JLabel("Loading products..."));
@@ -273,8 +270,7 @@ private void displayProductCards() {
             
             @Override
             protected Void doInBackground() throws Exception {
-                // Create main panel with vertical BoxLayout for single column
-                cardsPanel = new JPanel();
+                cardsPanel = new JPanel();                  // Create main panel with vertical BoxLayout for single column
                 cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
                 cardsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
                 
@@ -315,7 +311,7 @@ private void displayProductCards() {
     }
 }
 
-private JPanel createProductCard(Product product) {
+private JPanel createProductCard(Product product) {// This function used for creating the card 
     // Main card panel with horizontal BoxLayout
     JPanel card = new JPanel();
     card.setLayout(new BoxLayout(card, BoxLayout.X_AXIS));
@@ -415,7 +411,7 @@ private JPanel createProductCard(Product product) {
     imagePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
     imagePanel.setOpaque(false);
 
-    // First image
+    // this for the First image
     if (product.getImage1() != null && product.getImage1().length > 0) {
         try {
             ImageIcon icon1 = new ImageIcon(product.getImage1());
@@ -431,7 +427,7 @@ private JPanel createProductCard(Product product) {
         }
     }
 
-    // Second image
+    // this is for the Second image
     if (product.getImage2() != null && product.getImage2().length > 0) {
         try {
             ImageIcon icon2 = new ImageIcon(product.getImage2());
@@ -451,7 +447,7 @@ private JPanel createProductCard(Product product) {
     return card;
 }
    
-private void editProduct(Product product, JPanel card, String originalName) {
+private void editProduct(Product product, JPanel card, String originalName) {  //this is used for editing the data inside the card
     // Create a dialog for editing
     JDialog editDialog = new JDialog(this, "Edit Product", true);
     editDialog.setLayout(new BorderLayout());
@@ -483,7 +479,7 @@ private void editProduct(Product product, JPanel card, String originalName) {
             product.setPrice(Double.parseDouble(priceField.getText()));
             
             // Update database - now using product_id
-            updateProductInDatabase(product);
+            updateProductInDatabase(product);  //call the function to innitiate update
             
             // Refresh the card
             refreshCard(card, product);
@@ -502,7 +498,7 @@ private void editProduct(Product product, JPanel card, String originalName) {
     editDialog.setVisible(true);
 }
 
-private void deleteProduct(Product product, JPanel card) {
+private void deleteProduct(Product product, JPanel card) { //this function is used for deleting the data a.k.a the data or the product
     Connection conn = null;
     PreparedStatement pstmt = null;
     
@@ -537,12 +533,11 @@ private void deleteProduct(Product product, JPanel card) {
         try {
             if (pstmt != null) pstmt.close();
         } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 }
 
-private void updateProductInDatabase(Product product) {
+private void updateProductInDatabase(Product product) {  //after this finction is called this will initiate the update of the data
     String query = "UPDATE products SET product_name=?, tagline=?, price=? WHERE product_id=?";
     
     try (Connection conn = getConnection();
@@ -612,6 +607,12 @@ private void updateProductInDatabase(Product product) {
         jLabel6.setFont(new java.awt.Font("Irish Grover", 0, 36)); // NOI18N
         jLabel6.setForeground(new java.awt.Color(255, 255, 255));
         jLabel6.setText("Shipzy");
+        jLabel6.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        jLabel6.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                jLabel6MouseClicked(evt);
+            }
+        });
 
         javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
         jPanel5.setLayout(jPanel5Layout);
@@ -783,7 +784,7 @@ private void updateProductInDatabase(Product product) {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
-        // TODO add your handling code here:
+        // This action  or functions enables the user to insert a product
         var product = new AddProduct();
     product.setVisible(true);
     product.setLocationRelativeTo(this);
@@ -800,6 +801,14 @@ private void updateProductInDatabase(Product product) {
     private void jComboBox1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jComboBox1ActionPerformed
         // TODO add your handling code here:
     }//GEN-LAST:event_jComboBox1ActionPerformed
+
+    private void jLabel6MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel6MouseClicked
+        // TODO add your handling code here:
+         var homepage = new Homepage();  
+             homepage.setVisible(true);
+              this.dispose();
+        
+    }//GEN-LAST:event_jLabel6MouseClicked
 
     /**
      * @param args the command line arguments

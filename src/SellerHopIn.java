@@ -6,10 +6,6 @@ import java.util.logging.Logger;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import javax.swing.*;
-import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import javax.swing.JOptionPane;
 
 /*
@@ -34,7 +30,7 @@ public class SellerHopIn extends javax.swing.JFrame {
             Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-//onnection method
+//onnection method 
      Connection con;
      //SQLstatement
      Statement st;
