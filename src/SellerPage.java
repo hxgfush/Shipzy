@@ -7,6 +7,7 @@
  *
  * @author 63995
  */
+import newPackage.Product;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
@@ -176,57 +177,6 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
     }
 }   
   
- public class Product {
-    private int productId;
-    private String productName;
-    private String tagline;
-    private double price;
-    private final byte[] image1;  // For storing binary image data
-    private final byte[] image2;
-    
-    public Product(String productName, String tagline, double price, 
-                  byte[] image1, byte[] image2) {
-        this.productName = productName;
-        this.tagline = tagline;
-        this.price = price;
-        this.image1 = image1;
-        this.image2 = image2;
-    }
-       
-     public void setProductName(String productName) {
-        this.productName = productName;
-    }
-    
-    public void setTagline(String tagline) {
-        this.tagline = tagline;
-    }
-    
-    public void setPrice(double price) {
-        this.price = price;
-    }
-
-    
-
-// Add getter and setter
-public int getProductId() { return productId; }
-public void setProductId(int productId) { this.productId = productId; }
-    
-    // Getters
-    public String getProductName() { return productName; }
-    public String getTagline() { return tagline; }
-    public double getPrice() { return price; }
-    public byte[] getImage1() { return image1; }
-    public byte[] getImage2() { return image2; }
-    public Product(int productId, String productName, String tagline, 
-                  double price, byte[] image1, byte[] image2) {
-        this.productId = productId;
-        this.productName = productName;
-        this.tagline = tagline;
-        this.price = price;
-        this.image1 = image1;
-        this.image2 = image2;
-    }
-}
 
  
     
@@ -538,7 +488,7 @@ private void deleteProduct(Product product, JPanel card) { //this function is us
 }
 
 private void updateProductInDatabase(Product product) {  //after this finction is called this will initiate the update of the data
-    String query = "UPDATE products SET product_name=?, tagline=?, price=? WHERE product_id=?";
+    String query = "UPDATE products SET product_name=?, tagline=?, price=?, original_price? WHERE product_id=?";
     
     try (Connection conn = getConnection();
          PreparedStatement pstmt = conn.prepareStatement(query)) {
@@ -551,7 +501,8 @@ private void updateProductInDatabase(Product product) {  //after this finction i
         pstmt.setString(1, product.getProductName());
         pstmt.setString(2, product.getTagline());
         pstmt.setDouble(3, product.getPrice());
-        pstmt.setInt(4, product.getProductId());  // Critical: Use product_id as the identifier
+        pstmt.setDouble(4, product.getOriginalPrice());
+        pstmt.setInt(5, product.getProductId());  // Critical: Use product_id as the identifier
         
         int rowsAffected = pstmt.executeUpdate();
         
@@ -785,7 +736,7 @@ private void updateProductInDatabase(Product product) {  //after this finction i
 
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // This action  or functions enables the user to insert a product
-        var product = new AddProduct();
+        var product = new AddProduct(storename);
     product.setVisible(true);
     product.setLocationRelativeTo(this);
     

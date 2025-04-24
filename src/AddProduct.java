@@ -1,4 +1,4 @@
-/*
+    /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
  * Click nbfs://nbhost/SystemFileSystem/Templates/GUIForms/JFrame.java to edit this template
  */
@@ -7,6 +7,7 @@
  *
  * @author 63995
  */
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,20 +18,27 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JButton;
+import javax.swing.JFrame;
 
 public class AddProduct extends javax.swing.JFrame {
+    // this will hold the value
     private byte[] image1Data;
     private byte[] image2Data;
+    private String storename;
     
     /**
      * Creates new form AddProduct
      */
-    public AddProduct() {
+    public AddProduct(String storename) {
         initComponents();
+        this.storename = storename; 
         try {
             Connection();
         } catch (SQLException ex) {
@@ -41,7 +49,7 @@ public class AddProduct extends javax.swing.JFrame {
      Connection con;
      //SQLstatement
      Statement st;
-     
+  
      //Required for Connections
      //DbName,DbDriver,Url,USername,Password
      private static final String DbName = "shipzy";
@@ -64,6 +72,8 @@ public class AddProduct extends javax.swing.JFrame {
         }
      }
 
+
+     
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -242,20 +252,21 @@ public class AddProduct extends javax.swing.JFrame {
                     .addComponent(txtTagline, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jLabel5))
-                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jLabel5)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(70, 70, 70)
-                        .addComponent(jLabel4))
-                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addGap(9, 9, 9)
                         .addComponent(txtPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(14, 14, 14)
+                        .addComponent(jLabel4))
+                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 21, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 23, Short.MAX_VALUE)
                 .addComponent(upload1)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -290,7 +301,7 @@ public class AddProduct extends javax.swing.JFrame {
 
     private void saveActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_saveActionPerformed
         // TODO add your handling code here:
-         saveProductToDatabase();
+    saveProductToDatabase();
     }//GEN-LAST:event_saveActionPerformed
 
     private void upload1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_upload1ActionPerformed
@@ -334,71 +345,72 @@ public class AddProduct extends javax.swing.JFrame {
         }
     }
 
-    private void saveProductToDatabase() {
-        // Validate inputs
-        if (txtProductname.getText().trim().isEmpty() || 
-            txtTagline.getText().trim().isEmpty() || 
-            txtPrice.getText().trim().isEmpty() || 
-            txtOriginal.getText().trim().isEmpty()){
-            JOptionPane.showMessageDialog(this, "Please fill in all fields", 
+  private void saveProductToDatabase() {
+    // Validate inputs
+    if (txtProductname.getText().trim().isEmpty() || 
+        txtTagline.getText().trim().isEmpty() || 
+        txtPrice.getText().trim().isEmpty() || 
+        txtOriginal.getText().trim().isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Please fill in all fields", 
+            "Validation Error", JOptionPane.WARNING_MESSAGE);
+        return;
+    }
+
+    try {
+        double price;
+        double original_price;
+        try {
+            price = Double.parseDouble(txtPrice.getText());
+            original_price = Double.parseDouble(txtOriginal.getText());
+        } catch (NumberFormatException e) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid price", 
                 "Validation Error", JOptionPane.WARNING_MESSAGE);
             return;
         }
 
-        try {
-            double price;
-            double original_price;
-            try {
-                price = Double.parseDouble(txtPrice.getText());
-                original_price = Double.parseDouble(txtOriginal.getText());
-            } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Please enter a valid price", 
-                    "Validation Error", JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Prepare SQL statement
-            String sql = "INSERT INTO products (product_name, tagline, price, original_price, image1, image2) " +
-                         "VALUES (?, ?, ?, ?, ?, ?)";
+        // Prepare SQL statement
+        String sql = "INSERT INTO products (product_name, storename, tagline, price, original_price, image1, image2) " +
+                     "VALUES (?, ?, ?, ?, ?, ?, ?)"; // Note: Now has 7 parameters
+        
+        try (PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, txtProductname.getText());
+            pstmt.setString(2, storename); // Use the stored storename here
+            pstmt.setString(3, txtTagline.getText());
+            pstmt.setDouble(4, price);
+            pstmt.setDouble(5, original_price);
             
-            try (PreparedStatement pstmt = con.prepareStatement(sql)) {
-                pstmt.setString(1, txtProductname.getText());
-                pstmt.setString(2, txtTagline.getText());
-                pstmt.setDouble(3, price);
-                pstmt.setDouble(4, original_price);
-                
-                // Set images (use null if not uploaded)
-                if (image1Data != null) {
-                    pstmt.setBytes(5, image1Data);
-                } else {
-                    pstmt.setNull(5, java.sql.Types.BLOB);
-                }
-                
-                if (image2Data != null) {
-                    pstmt.setBytes(6, image2Data);
-                } else {
-                    pstmt.setNull(6, java.sql.Types.BLOB);
-                }
-                
-                // Execute update
-                int rowsAffected = pstmt.executeUpdate();
-                
-                if (rowsAffected > 0) {
-                    JOptionPane.showMessageDialog(this, "Product saved successfully!", 
-                        "Success", JOptionPane.INFORMATION_MESSAGE);
-                    clearForm();
-                    this.dispose();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Failed to save product", 
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                }
+            // Set images (use null if not uploaded)
+            if (image1Data != null) {
+                pstmt.setBytes(6, image1Data); // Now parameter index 6
+            } else {
+                pstmt.setNull(6, java.sql.Types.BLOB);
             }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-            ex.printStackTrace();
+            
+            if (image2Data != null) {
+                pstmt.setBytes(7, image2Data); // Now parameter index 7
+            } else {
+                pstmt.setNull(7, java.sql.Types.BLOB);
+            }
+            
+            // Execute update
+            int rowsAffected = pstmt.executeUpdate();
+            
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, "Product saved successfully!", 
+                    "Success", JOptionPane.INFORMATION_MESSAGE);
+                clearForm();
+                this.dispose();
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to save product", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
         }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
     }
+}
 
     private void clearForm() {
         txtProductname.setText("");
@@ -441,8 +453,9 @@ public class AddProduct extends javax.swing.JFrame {
 
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
+            private String storename;
             public void run() {
-                new AddProduct().setVisible(true);
+                new AddProduct(storename).setVisible(true);
             }
         });
     }

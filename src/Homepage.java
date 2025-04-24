@@ -9,13 +9,16 @@
  */
 
 
-
+import java.awt.BorderLayout;
+import newPackage.Product;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.sql.*;
@@ -24,16 +27,12 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.BorderFactory;
-import javax.swing.Box;
-import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
 import javax.swing.SwingWorker;
-import javax.swing.border.EmptyBorder;
 public class Homepage extends javax.swing.JFrame {
 
     /**
@@ -77,6 +76,11 @@ public class Homepage extends javax.swing.JFrame {
         }
      }
     
+     
+     
+
+     
+     
    public class WrapLayout extends FlowLayout { //This block of code is used to arange the card
     
     public WrapLayout() {
@@ -148,45 +152,6 @@ public class Homepage extends javax.swing.JFrame {
     }
 }   
    
-   public class Product {
-    private int productId;
-    private String productName;
-    private String storeName;
-    private String tagline;
-    private double price;
-    private double originalPrice;
-    private final byte[] image1;
-    private final byte[] image2;
-    private double rating;
-    private String location;
-
-    public Product(int productId, String productName, String storeName, String tagline, 
-                 double price, double originalPrice, byte[] image1, byte[] image2,
-                 double rating, String location) {
-        this.productId = productId;
-        this.productName = productName;
-        this.storeName = storeName;
-        this.tagline = tagline;
-        this.price = price;
-        this.originalPrice = originalPrice;
-        this.image1 = image1;
-        this.image2 = image2;
-        this.rating = rating;
-        this.location = location;
-    }
-
-    // Add all getters
-    public int getProductId() { return productId; }
-    public String getProductName() { return productName; }
-    public String getStoreName() { return storeName; }
-    public String getTagline() { return tagline; }
-    public double getPrice() { return price; }
-    public double getOriginalPrice() { return originalPrice; }
-    public byte[] getImage1() { return image1; }
-    public byte[] getImage2() { return image2; }
-    public double getRating() { return rating; }
-    public String getLocation() { return location; }
-}
     
 
     
@@ -206,7 +171,6 @@ private void loadProducts() {
                              "COALESCE(p.rating, 0.0) as rating, " +
                              "COALESCE((SELECT s.Location FROM sellermanager s LIMIT 1), '') as location " +
                              "FROM products p";
-                
                 ResultSet rs = st.executeQuery(query);
                 
                 while (rs.next()) {
@@ -221,8 +185,7 @@ private void loadProducts() {
                     double rating = rs.getDouble("rating");
                     String location = rs.getString("location");
                     
-                    products.add(new Product(id, name, store, tagline, price, 
-                                          originalPrice, image1, image2, rating, location));
+                    products.add(new Product(id, name, store, price, image1, image2));
                 }
             } catch (SQLException ex) {
                 Logger.getLogger(Homepage.class.getName()).log(Level.SEVERE, null, ex);
@@ -269,136 +232,124 @@ private void displayProducts(List<Product> products) {
 
 private JPanel createProductCard(Product product) {
     JPanel card = new JPanel();
-    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-    card.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(new Color(220, 220, 220)),
-        BorderFactory.createEmptyBorder(10, 10, 10, 10)
-    ));
-    card.setBackground(Color.WHITE);
-    card.setPreferredSize(new Dimension(220, 370)); // Increased height to accommodate both buttons
+    card.setLayout(new BorderLayout());
+    card.setPreferredSize(new Dimension(900, 180));
+    card.setBackground(new Color(69, 125, 88));
+    card.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
+    // Left Panel for product info
+    JPanel leftPanel = new JPanel();
+    leftPanel.setLayout(new GridBagLayout());
+    leftPanel.setBackground(new Color(69, 125, 88));
+    GridBagConstraints gbc = new GridBagConstraints();
+    gbc.anchor = GridBagConstraints.NORTHWEST;
+    gbc.insets = new Insets(2, 2, 2, 2);
+    gbc.gridx = 0;
+    gbc.gridy = 0;
+
+    // Product Name
+    JLabel nameLabel = new JLabel(product.getProductName());
+    nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    nameLabel.setForeground(Color.WHITE);
+    leftPanel.add(nameLabel, gbc);
+
+    // Tagline
+    gbc.gridy++;
+    JLabel taglineLabel = new JLabel("#" + product.getTagline());
+    taglineLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+    taglineLabel.setForeground(Color.WHITE);
+    leftPanel.add(taglineLabel, gbc);
+
+    // Price Section
+    gbc.gridy++;
+    JPanel pricePanel = new JPanel();
+    pricePanel.setBackground(new Color(69, 125, 88));
+    pricePanel.setLayout(new FlowLayout(FlowLayout.LEFT, 5, 0));
+
+    JLabel currentPrice = new JLabel("₱" + String.format("%.2f", product.getPrice()));
+    currentPrice.setForeground(Color.WHITE);
+    currentPrice.setFont(new Font("Arial", Font.BOLD, 14));
+    pricePanel.add(currentPrice);
+
+    if (product.getOriginalPrice() > product.getPrice()) {
+        JLabel originalPrice = new JLabel("₱" + String.format("%.2f", product.getOriginalPrice()));
+        originalPrice.setFont(new Font("Arial", Font.PLAIN, 12));
+        originalPrice.setForeground(Color.RED);
+        originalPrice.setText("<html><s>" + originalPrice.getText() + "</s></html>");
+        pricePanel.add(originalPrice);
+
+        double discount = 100 * (product.getOriginalPrice() - product.getPrice()) / product.getOriginalPrice();
+        JLabel discountLabel = new JLabel(String.format(" %.0f%% OFF", discount));
+        discountLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        discountLabel.setForeground(Color.RED);
+        pricePanel.add(discountLabel);
+    }
+
+    leftPanel.add(pricePanel, gbc);
+
+    // Buttons
+    gbc.gridy++;
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    buttonPanel.setBackground(new Color(69, 125, 88));
+
+    JButton buyButton = new JButton("Buy");
+    buyButton.setPreferredSize(new Dimension(110, 30));
+    buyButton.setFont(new Font("Arial", Font.BOLD, 12));
+    buyButton.setBackground(Color.WHITE);
+    buyButton.setForeground(Color.BLACK);
+    buyButton.addActionListener(e -> {
     try {
-        // Product Image
-        ImageIcon icon = new ImageIcon(product.getImage1());
-        Image img = icon.getImage().getScaledInstance(180, 150, Image.SCALE_SMOOTH);
-        JLabel imageLabel = new JLabel(new ImageIcon(img));
-        imageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(imageLabel);
+        Buypage buypage = new Buypage(product);
+        buypage.setVisible(true);
+    } catch (Exception ex) {
+        JOptionPane.showMessageDialog(null, 
+            "Error opening product details: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+         }
+    });
+    buttonPanel.add(buyButton);
 
-        // Store Name
-        JLabel storeLabel = new JLabel(product.getStoreName());
-        storeLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        storeLabel.setForeground(new Color(100, 100, 100));
-        storeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(storeLabel);
-
-        // Product Name
-        JLabel nameLabel = new JLabel(product.getProductName());
-        nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        nameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(nameLabel);
-
-        // Tagline
-        JLabel taglineLabel = new JLabel("#" + product.getTagline());
-        taglineLabel.setFont(new Font("Arial", Font.ITALIC, 10));
-        taglineLabel.setForeground(new Color(150, 150, 150));
-        taglineLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        card.add(taglineLabel);
-
-        // Price Panel
-        JPanel pricePanel = new JPanel();
-        pricePanel.setLayout(new FlowLayout(FlowLayout.CENTER, 5, 0));
-        pricePanel.setBackground(Color.WHITE);
-        pricePanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Current Price
-        JLabel priceLabel = new JLabel("₱" + String.format("%.2f", product.getPrice()));
-        priceLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        // Original Price if different
-        if (product.getOriginalPrice() > product.getPrice()) {
-            priceLabel.setForeground(Color.RED);
-            JLabel originalPriceLabel = new JLabel("₱" + String.format("%.2f", product.getOriginalPrice()));
-            originalPriceLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-            originalPriceLabel.setForeground(new Color(150, 150, 150));
-            originalPriceLabel.setText("<html><s>" + originalPriceLabel.getText() + "</s></html>");
-            pricePanel.add(originalPriceLabel);
-            pricePanel.add(Box.createRigidArea(new Dimension(5, 0)));
-        }
-        pricePanel.add(priceLabel);
-        card.add(pricePanel);
-
-        // Button Panel to hold both buttons side by side
-        JPanel buttonPanel = new JPanel();
-        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        buttonPanel.setBackground(Color.WHITE);
-        buttonPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
-
-        // Buy Now Button
-        JButton buyButton = new JButton("Buy");
-        buyButton.setFont(new Font("Arial", Font.BOLD, 12));
-        buyButton.setBackground(new Color(255, 100, 100)); // Red color
-        buyButton.setForeground(Color.WHITE);
-        buyButton.setPreferredSize(new Dimension(90, 30));
-        buyButton.addActionListener(e -> {
-            // Buy now functionality
-            JOptionPane.showMessageDialog(Homepage.this, 
-                "Proceeding to checkout for: " + product.getProductName(), 
-                "Checkout", JOptionPane.INFORMATION_MESSAGE);
-              var buypage = new Buypage();
-                  buypage.setVisible(true);
-                  buypage.setLocationRelativeTo(this);
-              
-              
-        });
-        buttonPanel.add(buyButton);
-
-        // Add to Cart Button
-        JButton addToCartButton = new JButton("Add to Cart");
-        addToCartButton.setFont(new Font("Arial", Font.BOLD, 12));
-        addToCartButton.setBackground(new Color(255, 215, 0)); // Gold color
-        addToCartButton.setForeground(Color.BLACK);
-        addToCartButton.setPreferredSize(new Dimension(110, 30));
-        addToCartButton.addActionListener(e -> {
-            // Add to cart functionality
-            JOptionPane.showMessageDialog(Homepage.this, 
-                product.getProductName() + " added to cart!", 
+    JButton addToCartButton = new JButton("Add to Cart");
+    addToCartButton.setPreferredSize(new Dimension(110, 30));
+    addToCartButton.setFont(new Font("Arial", Font.BOLD, 12));
+    addToCartButton.setBackground(Color.WHITE);
+    addToCartButton.setForeground(Color.BLACK);
+    addToCartButton.addActionListener(e -> {
+        JOptionPane.showMessageDialog(null, product.getProductName() + " added to cart!",
                 "Cart Update", JOptionPane.INFORMATION_MESSAGE);
-            
-        });
-        buttonPanel.add(addToCartButton);
+    });
+    buttonPanel.add(addToCartButton);
 
-        card.add(Box.createRigidArea(new Dimension(0, 10)));
-        card.add(buttonPanel);
+    leftPanel.add(buttonPanel, gbc);
 
-        // Rating and Location
-        JPanel footerPanel = new JPanel();
-        footerPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 15, 0));
-        footerPanel.setBackground(Color.WHITE);
-        footerPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    // Rating
+    gbc.gridy++;
+    JLabel ratingLabel = new JLabel(String.format("★ %.1f", product.getRating()));
+    ratingLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+    ratingLabel.setForeground(Color.WHITE);
+    leftPanel.add(ratingLabel, gbc);
 
-        // Rating
-        JLabel ratingLabel = new JLabel(String.format("★ %.1f", product.getRating()));
-        ratingLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        footerPanel.add(ratingLabel);
-
-        // Location
-        JLabel locationLabel = new JLabel(product.getLocation());
-        locationLabel.setFont(new Font("Arial", Font.PLAIN, 10));
-        footerPanel.add(locationLabel);
-
-        card.add(Box.createRigidArea(new Dimension(0, 10)));
-        card.add(footerPanel);
-
+    // Right Panel for image
+    JPanel rightPanel = new JPanel();
+    rightPanel.setBackground(new Color(69, 125, 88));
+    rightPanel.setLayout(new BorderLayout());
+    try {
+        ImageIcon icon = new ImageIcon(product.getImage1());
+        Image img = icon.getImage().getScaledInstance(140, 120, Image.SCALE_SMOOTH);
+        JLabel imageLabel = new JLabel(new ImageIcon(img));
+        rightPanel.add(imageLabel, BorderLayout.CENTER);
     } catch (Exception e) {
         e.printStackTrace();
-        // Fallback if image loading fails
-        JLabel errorLabel = new JLabel("Image not available");
-        card.add(errorLabel);
+        rightPanel.add(new JLabel("Image not available"));
     }
+
+    card.add(leftPanel, BorderLayout.WEST);
+    card.add(rightPanel, BorderLayout.EAST);
 
     return card;
 }
+
+
     
 
     
@@ -415,15 +366,11 @@ private JPanel createProductCard(Product product) {
         jPopupMenu1 = new javax.swing.JPopupMenu();
         jPopupMenu2 = new javax.swing.JPopupMenu();
         navigation = new javax.swing.JPanel();
-        jLabel1 = new javax.swing.JLabel();
         jToggleButton1 = new javax.swing.JToggleButton();
         jPanel1 = new javax.swing.JPanel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jList1 = new javax.swing.JList<>();
         jLabel2 = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
-        logoutbtn = new javax.swing.JButton();
-        helpbtn = new javax.swing.JButton();
         sellerbtn = new javax.swing.JButton();
         jPanel2 = new javax.swing.JPanel();
         jTextField1 = new javax.swing.JTextField();
@@ -431,14 +378,17 @@ private JPanel createProductCard(Product product) {
         jButton4 = new javax.swing.JButton();
         jButton5 = new javax.swing.JButton();
         jPanel3 = new javax.swing.JPanel();
+        jPanel5 = new javax.swing.JPanel();
+        jLabel6 = new javax.swing.JLabel();
+        logoutbtn = new javax.swing.JButton();
+        helpbtn = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
 
         jMenuItem1.setText("jMenuItem1");
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         navigation.setBackground(new java.awt.Color(52, 70, 49));
-
-        jLabel1.setText("Shipzy");
 
         jToggleButton1.setText("Items");
         jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -475,26 +425,8 @@ private JPanel createProductCard(Product product) {
 
         jLabel2.setText("Categories:");
 
-        jButton1.setBackground(new java.awt.Color(69, 125, 88));
-        jButton1.setText("About");
-
-        logoutbtn.setBackground(new java.awt.Color(69, 125, 88));
-        logoutbtn.setText("Log out");
-        logoutbtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                logoutbtnActionPerformed(evt);
-            }
-        });
-
-        helpbtn.setBackground(new java.awt.Color(69, 125, 88));
-        helpbtn.setText("Help?");
-        helpbtn.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                helpbtnActionPerformed(evt);
-            }
-        });
-
         sellerbtn.setBackground(new java.awt.Color(69, 125, 88));
+        sellerbtn.setForeground(new java.awt.Color(255, 255, 255));
         sellerbtn.setText("be a seller");
         sellerbtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -503,6 +435,7 @@ private JPanel createProductCard(Product product) {
         });
 
         jPanel2.setBackground(new java.awt.Color(42, 58, 41));
+        // In the jPanel2 layout (initComponents):
 
         jTextField1.setBackground(new java.awt.Color(255, 255, 255));
 
@@ -516,6 +449,11 @@ private JPanel createProductCard(Product product) {
         jButton5.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
         jButton5.setForeground(new java.awt.Color(0, 0, 0));
         jButton5.setText("Hot deals");
+        jButton5.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton5ActionPerformed(evt);
+            }
+        });
 
         jPanel3.setBackground(new java.awt.Color(255, 255, 255));
         jPanel3.setLayout(new java.awt.FlowLayout(java.awt.FlowLayout.LEFT, 15, 15));
@@ -525,11 +463,11 @@ private JPanel createProductCard(Product product) {
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 0, Short.MAX_VALUE)
+            .addGap(0, 948, Short.MAX_VALUE)
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 679, Short.MAX_VALUE)
+            .addGap(0, 477, Short.MAX_VALUE)
         );
 
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
@@ -538,21 +476,20 @@ private JPanel createProductCard(Product product) {
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addGap(30, 30, 30)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(871, Short.MAX_VALUE))
-                    .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(218, 218, 218))))
+                .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 214, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 49, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
             .addGroup(jPanel2Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addContainerGap())
+            .addGroup(jPanel2Layout.createSequentialGroup()
+                .addGap(38, 38, 38)
+                .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 239, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 448, Short.MAX_VALUE)
+                .addComponent(jButton5, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(102, 102, 102))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -561,13 +498,63 @@ private JPanel createProductCard(Product product) {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(jButton4, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(43, 43, 43)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 20, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(jButton5, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addComponent(jButton5)
+                    .addComponent(jLabel3))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap())
         );
+
+        jPanel5.setBackground(new java.awt.Color(37, 42, 26));
+
+        jLabel6.setFont(new java.awt.Font("Irish Grover", 0, 36)); // NOI18N
+        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel6.setText("Shipzy");
+
+        javax.swing.GroupLayout jPanel5Layout = new javax.swing.GroupLayout(jPanel5);
+        jPanel5.setLayout(jPanel5Layout);
+        jPanel5Layout.setHorizontalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addGap(14, 14, 14)
+                .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+        jPanel5Layout.setVerticalGroup(
+            jPanel5Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel5Layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jLabel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
+        logoutbtn.setBackground(new java.awt.Color(69, 125, 88));
+        logoutbtn.setForeground(new java.awt.Color(255, 255, 255));
+        logoutbtn.setText("Log out");
+        logoutbtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                logoutbtnActionPerformed(evt);
+            }
+        });
+
+        helpbtn.setBackground(new java.awt.Color(69, 125, 88));
+        helpbtn.setForeground(new java.awt.Color(255, 255, 255));
+        helpbtn.setText("Help?");
+        helpbtn.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                helpbtnActionPerformed(evt);
+            }
+        });
+
+        jButton1.setBackground(new java.awt.Color(69, 125, 88));
+        jButton1.setForeground(new java.awt.Color(255, 255, 255));
+        jButton1.setText("About");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
 
         javax.swing.GroupLayout navigationLayout = new javax.swing.GroupLayout(navigation);
         navigation.setLayout(navigationLayout);
@@ -576,53 +563,56 @@ private JPanel createProductCard(Product product) {
             .addGroup(navigationLayout.createSequentialGroup()
                 .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(navigationLayout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                                .addComponent(helpbtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(logoutbtn, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-                            .addComponent(sellerbtn))
-                        .addGap(51, 51, 51))
-                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, navigationLayout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(30, 30, 30))
-                    .addGroup(navigationLayout.createSequentialGroup()
                         .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(navigationLayout.createSequentialGroup()
-                                .addGap(72, 72, 72)
-                                .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addGap(0, 0, Short.MAX_VALUE)
+                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addGroup(navigationLayout.createSequentialGroup()
-                                .addContainerGap()
                                 .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                                    .addGroup(navigationLayout.createSequentialGroup()
+                                        .addContainerGap()
+                                        .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 75, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(navigationLayout.createSequentialGroup()
+                                        .addGap(41, 41, 41)
+                                        .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(logoutbtn)
+                                            .addComponent(sellerbtn)
+                                            .addComponent(helpbtn)
+                                            .addComponent(jButton1))))
+                                .addGap(0, 0, Short.MAX_VALUE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED))
+                    .addGroup(navigationLayout.createSequentialGroup()
+                        .addGap(32, 32, 32)
+                        .addComponent(jToggleButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 111, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap())
+            .addComponent(jPanel5, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
         navigationLayout.setVerticalGroup(
             navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(navigationLayout.createSequentialGroup()
-                .addGap(21, 21, 21)
-                .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jToggleButton1)
-                .addGap(44, 44, 44)
-                .addComponent(jLabel2)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
-                .addComponent(jButton1)
-                .addGap(18, 18, 18)
-                .addComponent(logoutbtn)
-                .addGap(18, 18, 18)
-                .addComponent(helpbtn)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(sellerbtn)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
-            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jPanel5, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGroup(navigationLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, navigationLayout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, 540, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(navigationLayout.createSequentialGroup()
+                        .addGap(44, 44, 44)
+                        .addComponent(jToggleButton1)
+                        .addGap(30, 30, 30)
+                        .addComponent(jLabel2)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jButton1)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(helpbtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(logoutbtn)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(sellerbtn)
+                        .addGap(39, 39, 39))))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -630,12 +620,16 @@ private JPanel createProductCard(Product product) {
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
                 .addComponent(navigation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(navigation, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(navigation, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         pack();
@@ -667,6 +661,14 @@ private JPanel createProductCard(Product product) {
         hop.setLocationRelativeTo(null);
         this.dispose();
     }//GEN-LAST:event_sellerbtnActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    private void jButton5ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton5ActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_jButton5ActionPerformed
 
     /**
      * @param args the command line arguments
@@ -708,14 +710,15 @@ private JPanel createProductCard(Product product) {
     private javax.swing.JButton jButton1;
     private javax.swing.JButton jButton4;
     private javax.swing.JButton jButton5;
-    private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
+    private javax.swing.JLabel jLabel6;
     private javax.swing.JList<String> jList1;
     private javax.swing.JMenuItem jMenuItem1;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
+    private javax.swing.JPanel jPanel5;
     private javax.swing.JPopupMenu jPopupMenu1;
     private javax.swing.JPopupMenu jPopupMenu2;
     private javax.swing.JScrollPane jScrollPane1;
