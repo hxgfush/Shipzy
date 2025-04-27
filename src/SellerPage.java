@@ -187,30 +187,45 @@ public class ProductDAO {
         this.con = con;
     }
     
-    public List<Product> getAllProducts() throws SQLException { /* now this function is used to initiate the selection of data in the data base */
-    List<Product> products = new ArrayList<>();
-    String query = "SELECT product_id, product_name, tagline, price, image1, image2 FROM products";
-    
-    try (Statement stmt = con.createStatement();
-         ResultSet rs = stmt.executeQuery(query)) {
+    public List<Product> getProductsByStore(String storename) throws SQLException { 
+        List<Product> products = new ArrayList<>();
+        String query = "SELECT " +
+               "product_id, " +
+               "product_name, " +
+               "COALESCE(storename, 'Default Store') as storename, " +
+               "COALESCE(tagline, '') as tagline, " +
+               "price, " +
+               "COALESCE(original_price, price) as original_price, " +
+               "image1, " +
+               "image2, " +
+               "COALESCE(rating, 0.0) as rating, " +
+               "COALESCE(location, '') as location " +
+               "FROM products WHERE storename = ?";
         
-        while (rs.next()) {
-            Product product = new Product(
-                rs.getInt("product_id"),
-                rs.getString("product_name"),
-                rs.getString("tagline"),
-                rs.getDouble("price"),
-                rs.getBytes("image1"),
-                rs.getBytes("image2")
-);
-            products.add(product);
+        try (PreparedStatement stmt = con.prepareStatement(query)) {
+            stmt.setString(1, storename);
+            ResultSet rs = stmt.executeQuery();
+            
+            while (rs.next()) {
+                int id = rs.getInt("product_id");
+                String name = rs.getString("product_name");
+                String store = rs.getString("storename");
+                String tagline = rs.getString("tagline");
+                double price = rs.getDouble("price");
+                double originalPrice = rs.getDouble("original_price");
+                byte[] image1 = rs.getBytes("image1");
+                byte[] image2 = rs.getBytes("image2");
+                double rating = rs.getDouble("rating");
+                String location = rs.getString("location");
+                
+                products.add(new Product(id, name, store, tagline, price, originalPrice, image1, image2, rating, location));
+            }
         }
+        return products;
     }
-    return products;
-}
 }
 
-private void displayProductCards() { //This function is used for displaying the card
+private void displayProductCards() {
     try {
         jTabbedPane2.removeAll();
         jTabbedPane2.addTab("Products", new JLabel("Loading products..."));
@@ -220,18 +235,24 @@ private void displayProductCards() { //This function is used for displaying the 
             
             @Override
             protected Void doInBackground() throws Exception {
-                cardsPanel = new JPanel();                  // Create main panel with vertical BoxLayout for single column
+                Connection conn = getConnection();
+                ProductDAO productDAO = new ProductDAO(conn);
+                List<Product> storeProducts = productDAO.getProductsByStore(storename); // Changed to use storename filter
+                
+                cardsPanel = new JPanel();
                 cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
                 cardsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                cardsPanel.setBackground(new Color(62,93,59));
                 
-                ProductDAO productDAO = new ProductDAO(con);
-                List<Product> allProducts = productDAO.getAllProducts();
-                
-                for (Product product : allProducts) {
-                    JPanel card = createProductCard(product);
-                    card.setAlignmentX(Component.LEFT_ALIGNMENT);
-                    cardsPanel.add(card);
-                    cardsPanel.add(Box.createRigidArea(new Dimension(0, 15))); // Spacing between cards
+                if (storeProducts.isEmpty()) {
+                    cardsPanel.add(new JLabel("No products found for your store"));
+                } else {
+                    for (Product product : storeProducts) {
+                        JPanel card = createProductCard(product);
+                        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        cardsPanel.add(card);
+                        cardsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    }
                 }
                 return null;
             }
@@ -243,11 +264,13 @@ private void displayProductCards() { //This function is used for displaying the 
                     JScrollPane scrollPane = new JScrollPane(cardsPanel);
                     scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
                     scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                    scrollPane.setBackground(new Color(62,93,59));
                     scrollPane.setBorder(null);
                     
                     jTabbedPane2.removeAll();
-                    jTabbedPane2.addTab("All Products", scrollPane);
+                    jTabbedPane2.addTab("My Products", scrollPane); // Changed tab name
                 } catch (Exception ex) {
+                    ex.printStackTrace();
                     JOptionPane.showMessageDialog(SellerPage.this, 
                         "Error loading products: " + ex.getMessage(),
                         "Error", JOptionPane.ERROR_MESSAGE);
@@ -256,8 +279,10 @@ private void displayProductCards() { //This function is used for displaying the 
         };
         worker.execute();
     } catch (Exception ex) {
-        JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, 
+            "Error initializing product display: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
     }
 }
 
@@ -269,7 +294,7 @@ private JPanel createProductCard(Product product) {// This function used for cre
         BorderFactory.createLineBorder(new Color(200, 200, 200)),
         BorderFactory.createEmptyBorder(15, 15, 15, 15)
     ));
-    card.setBackground(Color.WHITE);
+    card.setBackground(new Color(69, 125, 88));
     card.setPreferredSize(new Dimension(500, 200)); // Wider horizontal card
 
     // Left panel for text content
@@ -278,9 +303,10 @@ private JPanel createProductCard(Product product) {// This function used for cre
     leftPanel.setOpaque(false);
 
     // Store name (top-left)
-    JLabel storeLabel = new JLabel(storename);
+    JLabel storeLabel = new JLabel(product.getStoreName());
     storeLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
     storeLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    storeLabel.setForeground(Color.WHITE);
     leftPanel.add(storeLabel);
     leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
@@ -288,12 +314,14 @@ private JPanel createProductCard(Product product) {// This function used for cre
     JLabel nameLabel = new JLabel(product.getProductName());
     nameLabel.setFont(new Font("SansSerif", Font.BOLD, 18));
     nameLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    nameLabel.setForeground(Color.WHITE);
     leftPanel.add(nameLabel);
     leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
     // Tagline (left-aligned with hashtag)
     JLabel taglineLabel = new JLabel("#" + product.getTagline());
     taglineLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    taglineLabel.setForeground(Color.WHITE);
     taglineLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     leftPanel.add(taglineLabel);
     leftPanel.add(Box.createRigidArea(new Dimension(0, 15)));
@@ -343,13 +371,15 @@ private JPanel createProductCard(Product product) {// This function used for cre
     JLabel priceLabel = new JLabel(String.format("$ %.2f", product.getPrice()));
     priceLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
     priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    priceLabel.setForeground(Color.WHITE);
     leftPanel.add(priceLabel);
     leftPanel.add(Box.createRigidArea(new Dimension(0, 5)));
 
     // Location (left-aligned)
-    JLabel locationLabel = new JLabel("location");
+    JLabel locationLabel = new JLabel(product.getLocation());
     locationLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
     locationLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    locationLabel.setForeground(Color.WHITE);
     leftPanel.add(locationLabel);
 
     card.add(leftPanel);
@@ -448,16 +478,17 @@ private void editProduct(Product product, JPanel card, String originalName) {  /
     editDialog.setVisible(true);
 }
 
-private void deleteProduct(Product product, JPanel card) { //this function is used for deleting the data a.k.a the data or the product
+private void deleteProduct(Product product, JPanel card) {
     Connection conn = null;
     PreparedStatement pstmt = null;
     
     try {
         conn = getConnection();
-        String query = "DELETE FROM products WHERE product_name=?";
+        String query = "DELETE FROM products WHERE product_id = ? AND storename = ?";
         
         pstmt = conn.prepareStatement(query);
-        pstmt.setString(1, product.getProductName());
+        pstmt.setInt(1, product.getProductId());
+        pstmt.setString(2, storename);
         
         int rowsAffected = pstmt.executeUpdate();
         
@@ -471,7 +502,7 @@ private void deleteProduct(Product product, JPanel card) { //this function is us
             JOptionPane.showMessageDialog(this, "Product deleted successfully");
         } else {
             JOptionPane.showMessageDialog(this, 
-                "No product was deleted. Product may not exist.", 
+                "No product was deleted. Either it doesn't exist or you don't have permission.", 
                 "Warning", JOptionPane.WARNING_MESSAGE);
         }
     } catch (SQLException ex) {
@@ -487,25 +518,27 @@ private void deleteProduct(Product product, JPanel card) { //this function is us
     }
 }
 
-private void updateProductInDatabase(Product product) {  //after this finction is called this will initiate the update of the data
-    String query = "UPDATE products SET product_name=?, tagline=?, price=?, original_price? WHERE product_id=?";
+private void updateProductInDatabase(Product product) {
+    // Corrected SQL query with proper syntax
+    String query = "UPDATE products SET product_name=?, tagline=?, price=?, original_price=? WHERE product_id=?";
     
-    try (Connection conn = getConnection();
-         PreparedStatement pstmt = conn.prepareStatement(query)) {
-        
+    try 
+         {
+         PreparedStatement param = con.prepareStatement(query);
         // Debug output
         System.out.println("Updating product ID: " + product.getProductId());
         System.out.println("New values: " + product.getProductName() + ", " + 
-                          product.getTagline() + ", " + product.getPrice());
+                         product.getTagline() + ", " + product.getPrice());
         
-        pstmt.setString(1, product.getProductName());
-        pstmt.setString(2, product.getTagline());
-        pstmt.setDouble(3, product.getPrice());
-        pstmt.setDouble(4, product.getOriginalPrice());
-        pstmt.setInt(5, product.getProductId());  // Critical: Use product_id as the identifier
-        
-        int rowsAffected = pstmt.executeUpdate();
-        
+        // Set parameters in correct order (1-based index)
+        param.setString(1, product.getProductName());
+        param.setString(2, product.getTagline());
+        param.setDouble(3, product.getPrice());
+        param.setDouble(4, product.getOriginalPrice());
+        param.setInt(5, product.getProductId());
+
+        int rowsAffected = param.executeUpdate();
+
         if (rowsAffected == 0) {
             System.out.println("No rows updated - product ID not found");
             JOptionPane.showMessageDialog(this, 
@@ -514,15 +547,15 @@ private void updateProductInDatabase(Product product) {  //after this finction i
         } else {
             System.out.println("Successfully updated product ID: " + product.getProductId());
             JOptionPane.showMessageDialog(this, 
-                "Product updated successfully!",
+                "Product updated successfully!", 
                 "Success", JOptionPane.INFORMATION_MESSAGE);
         }
     } catch (SQLException ex) {
-        System.out.println("SQL Error: " + ex.getMessage());
-        JOptionPane.showMessageDialog(this, 
-            "Database error: " + ex.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
+        System.err.println("SQL Error: " + ex.getMessage());
         ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
     }
 }
 
@@ -587,7 +620,7 @@ private void updateProductInDatabase(Product product) {  //after this finction i
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 270, Short.MAX_VALUE)
+            .addGap(0, 228, Short.MAX_VALUE)
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -633,7 +666,6 @@ private void updateProductInDatabase(Product product) {  //after this finction i
             .addGroup(jPanel4Layout.createSequentialGroup()
                 .addContainerGap()
                 .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jTabbedPane2)
                     .addGroup(jPanel4Layout.createSequentialGroup()
                         .addGroup(jPanel4Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1, javax.swing.GroupLayout.PREFERRED_SIZE, 177, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -641,7 +673,8 @@ private void updateProductInDatabase(Product product) {  //after this finction i
                             .addGroup(jPanel4Layout.createSequentialGroup()
                                 .addGap(6, 6, 6)
                                 .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 93, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 0, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addComponent(jTabbedPane2, javax.swing.GroupLayout.Alignment.TRAILING))
                 .addContainerGap())
         );
         jPanel4Layout.setVerticalGroup(
@@ -653,8 +686,8 @@ private void updateProductInDatabase(Product product) {  //after this finction i
                 .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 24, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jComboBox1, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 428, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(jTabbedPane2, javax.swing.GroupLayout.PREFERRED_SIZE, 275, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
@@ -680,21 +713,24 @@ private void updateProductInDatabase(Product product) {  //after this finction i
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(27, 27, 27)
-                        .addComponent(jLabel5)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(owberLabel)
-                        .addGap(0, 0, Short.MAX_VALUE))
+                        .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addGap(18, 18, 18)
                                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(jLabel3))
-                                .addGap(0, 1293, Short.MAX_VALUE))))))
+                                    .addComponent(jLabel3)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel5)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(owberLabel))))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addContainerGap(595, Short.MAX_VALUE))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -705,7 +741,7 @@ private void updateProductInDatabase(Product product) {  //after this finction i
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
                         .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
@@ -713,8 +749,8 @@ private void updateProductInDatabase(Product product) {  //after this finction i
                             .addComponent(jLabel5))
                         .addGap(35, 35, 35)
                         .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, 402, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addContainerGap())))
         );
 
@@ -726,9 +762,7 @@ private void updateProductInDatabase(Product product) {  //after this finction i
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, 628, javax.swing.GroupLayout.PREFERRED_SIZE)
         );
 
         pack();
