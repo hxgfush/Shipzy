@@ -29,7 +29,6 @@ import java.util.List;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Logger;
-import java.sql.Statement;
 import java.sql.Connection;         /*This the import section which get the fumctoionality from the libraries */
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
