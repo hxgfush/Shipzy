@@ -194,55 +194,55 @@ public class SellerHopIn extends javax.swing.JFrame {
 
     private void HopinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HopinActionPerformed
         // TODO add your handling code here:
-   try {
-        String storename = txtHopStorename.getText();
-        String sellerid = txtHopSellerid.getText();
+     try {
+        String storename = txtHopStorename.getText().trim();
+        String sellerid = txtHopSellerid.getText().trim();
 
-        String queryLogin = "SELECT * FROM sellermanager WHERE Storename = ? AND Sellerid = ?";
+        // Check if the store exists for the given username and seller ID
+        String queryLogin = "SELECT * FROM sellermanager WHERE Storename = ? AND Sellerid = ? AND Username = ?";
         PreparedStatement pst = con.prepareStatement(queryLogin);
         pst.setString(1, storename);
         pst.setString(2, sellerid);
- 
+        pst.setString(3, username); // Ensure the store belongs to the logged-in user
+
         ResultSet rs = pst.executeQuery();
         if (rs.next()) {
+            // Retrieve store details
             String Storename = rs.getString("Storename");
             String Name = rs.getString("Name");
-            String Location = rs.getString("Location"); // Get the location from database
+            String Location = rs.getString("Location"); // Get the location from the database
             int ID = rs.getInt("Sellerid");
             String Contacts = rs.getString("Contact");
-            
+
             if (Storename != null && Name != null) {
                 // Pass the location to SellerPage
                 SellerPage seller = new SellerPage(storename, Name, Location, ID, Contacts);
                 seller.setLocationRelativeTo(null);
                 seller.setVisible(true);
-                
-                // Close both frames
-                this.dispose();          // Close SellerHopIn
-                if (homepage != null) {  // Close Homepage if reference exists
-                    homepage.dispose();
-                }
+
+                // Close the current frame
+                this.dispose();
             } else {
-                JOptionPane.showMessageDialog(null, "Store name or seller name not found!");    
+                JOptionPane.showMessageDialog(this, "Store name or seller details not found!");
             }
         } else {
-            JOptionPane.showMessageDialog(null, "Invalid Credentials");
+            JOptionPane.showMessageDialog(this, "Invalid Credentials or store does not belong to you.");
         }
         rs.close();
         pst.close();
     } catch (SQLException ex) {
         Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
-        JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage());
-    }                     
+        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }                
     }//GEN-LAST:event_HopinActionPerformed
 
     private void RegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_RegisterMouseClicked
         // TODO add your handling code here:
-        var register = new SellerRegistration(homepage, username);
-        register.setVisible(true);
-        register.pack();
-        register.setLocationRelativeTo(null);
-        this.dispose();
+         SellerRegistration register = new SellerRegistration(homepage, username);
+    register.setVisible(true);
+    register.pack();
+    register.setLocationRelativeTo(null);
+    this.dispose();
     }//GEN-LAST:event_RegisterMouseClicked
 
     private void txtHopSelleridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtHopSelleridActionPerformed

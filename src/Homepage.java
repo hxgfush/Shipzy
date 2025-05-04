@@ -1557,11 +1557,44 @@ public Homepage getInstance(String firstname, String lastname) {
     private void sellerbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_sellerbtnActionPerformed
         // TODO add your handling code here:
     // Create and show SellerHopIn, passing the homepage reference
-    var hop = new SellerHopIn(homepage, username);
-    hop.setVisible(true);
-    hop.pack();
-    hop.setLocationRelativeTo(null);
-    
+       try {
+        // Check if the user has a store registered
+        String query = "SELECT Storename FROM sellermanager WHERE Username = ?";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, username); // Use the logged-in username
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            // If a store is found, open SellerHopIn
+            String storename = rs.getString("Storename");
+            SellerHopIn hop = new SellerHopIn(homepage, username);
+            hop.setVisible(true);
+            hop.pack();
+            hop.setLocationRelativeTo(null);
+        } else {
+            // If no store is found, redirect to SellerRegistration
+            int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "You are not registered as a seller. Would you like to register now?",
+                "Not Registered",
+                JOptionPane.YES_NO_OPTION
+            );
+
+            if (confirm == JOptionPane.YES_OPTION) {
+                // Open the SellerRegistration form
+                SellerRegistration register = new SellerRegistration(homepage, username);
+                register.setVisible(true);
+                register.pack();
+                register.setLocationRelativeTo(null);
+            }
+        }
+        rs.close();
+        pst.close();
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }S
     // Optionally close the current frame if needed
     // this.dispose();
     }//GEN-LAST:event_sellerbtnActionPerformed
