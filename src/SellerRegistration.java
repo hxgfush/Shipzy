@@ -255,61 +255,66 @@ public class SellerRegistration extends javax.swing.JFrame {
     }//GEN-LAST:event_jLabel7MouseClicked
 
     private void ConfrmbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConfrmbtnActionPerformed
-        // TODO add your handling code here:
-        String storename, location, sellerid, name, contact;
-        storename = txtStorename.getText();
-        location = txtLocation.getText();
-        sellerid = txtId.getText();
-        name = txtName.getText();
-        contact = txtContact.getText();
+         // Get input values from the text fields
+    String storename = txtStorename.getText().trim();
+    String location = txtLocation.getText().trim();
+    String sellerid = txtId.getText().trim();
+    String name = txtName.getText().trim();
+    String contact = txtContact.getText().trim();
 
-        try {
-
-            if ("".equals(txtStorename.getText())){
-                JOptionPane.showMessageDialog(new JFrame(),"Required Store Name");
-                return;
-            }
-            if ("".equals(txtLocation.getText())){
-                JOptionPane.showMessageDialog(new JFrame(),"Required Location");
-                return;
-            }
-            if ("".equals(txtId.getText())){
-                JOptionPane.showMessageDialog(new JFrame(),"Required ID");
-                return;
-            }
-            if ("".equals(txtName.getText())){
-                JOptionPane.showMessageDialog(new JFrame(),"Required Seller Name");
-                return;
-            }
-            if ("".equals(txtContact.getText())){
-                JOptionPane.showMessageDialog(new JFrame(),"Required Contact");
-                return;
-            }else{
-
-                PreparedStatement pst = con.prepareStatement("INSERT INTO sellermanager (Storename, Location, Sellerid, Name, Contact) VALUES(?,?,?,?,?)");
-                pst.setString(1,storename);
-                pst.setString(2,location);
-                pst.setString(3,sellerid);
-                pst.setString(4,name);
-                pst.setString(5,contact);
-
-                int k = pst.executeUpdate();
-
-                if (k==1){
-                    JOptionPane.showMessageDialog(this,"Registerd Succesfuly!");
-                    txtStorename.setText("");
-                    txtLocation.setText("");
-                    txtId.setText("");
-                    txtName.setText("");
-                    txtContact.setText("");
-
-                }else{
-                    JOptionPane.showMessageDialog(this,"Too bad its already Registerd");
-                }
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(SellerRegistration.class.getName()).log(Level.SEVERE, null, ex);
+    try {
+        // Validate required fields
+        if (storename.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Store Name is required.");
+            return;
         }
+        if (location.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Location is required.");
+            return;
+        }
+        if (sellerid.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Seller ID is required.");
+            return;
+        }
+        if (name.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Seller Name is required.");
+            return;
+        }
+        if (contact.isEmpty()) {
+            JOptionPane.showMessageDialog(new JFrame(), "Contact is required.");
+            return;
+        }
+
+        // Insert data into the sellermanager table
+        PreparedStatement pst = con.prepareStatement(
+            "INSERT INTO sellermanager (Storename, Location, Sellerid, Name, Contact, Username) VALUES (?, ?, ?, ?, ?, ?)"
+        );
+        pst.setString(1, storename);  // Store name
+        pst.setString(2, location);  // Location
+        pst.setString(3, sellerid);  // Seller ID
+        pst.setString(4, name);      // Name
+        pst.setString(5, contact);   // Contact
+        pst.setString(6, username);  // Username (logged-in user)
+
+        int k = pst.executeUpdate();
+
+        if (k == 1) {
+            JOptionPane.showMessageDialog(this, "Registered Successfully!");
+            // Clear the form fields
+            txtStorename.setText("");
+            txtLocation.setText("");
+            txtId.setText("");
+            txtName.setText("");
+            txtContact.setText("");
+        } else {
+            JOptionPane.showMessageDialog(this, "Registration failed. Please try again.");
+        }
+
+        pst.close();
+    } catch (SQLException ex) {
+        Logger.getLogger(SellerRegistration.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+    }
     }//GEN-LAST:event_ConfrmbtnActionPerformed
 
     private void txtNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNameActionPerformed

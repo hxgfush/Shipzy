@@ -115,6 +115,100 @@ public class Login extends javax.swing.JFrame {
             }
         }
     });
+}       
+     
+     private void showPasswordChangeDialog(String username) {
+    // Create the JDialog
+    JDialog dialog = new JDialog(this, "Change Password", true);
+    dialog.setSize(300, 250);
+    dialog.setLocationRelativeTo(this);
+    dialog.setLayout(new java.awt.GridLayout(5, 1, 10, 10));
+
+    // Create input fields and labels
+    JLabel currentPasswordLabel = new JLabel("Current Password:");
+    JPasswordField currentPasswordField = new JPasswordField();
+
+    JLabel newPasswordLabel = new JLabel("New Password:");
+    JPasswordField newPasswordField = new JPasswordField();
+
+    JLabel confirmPasswordLabel = new JLabel("Confirm New Password:");
+    JPasswordField confirmPasswordField = new JPasswordField();
+
+    // Create buttons
+    JButton submitButton = new JButton("Submit");
+    JButton cancelButton = new JButton("Cancel");
+
+    // Add components to the dialog
+    dialog.add(currentPasswordLabel);
+    dialog.add(currentPasswordField);
+    dialog.add(newPasswordLabel);
+    dialog.add(newPasswordField);
+    dialog.add(confirmPasswordLabel);
+    dialog.add(confirmPasswordField);
+
+    JPanel buttonPanel = new JPanel();
+    buttonPanel.add(submitButton);
+    buttonPanel.add(cancelButton);
+    dialog.add(buttonPanel);
+
+    // Add button actions
+    submitButton.addActionListener(e -> {
+        try {
+            String currentPassword = new String(currentPasswordField.getPassword());
+            String newPassword = new String(newPasswordField.getPassword());
+            String confirmPassword = new String(confirmPasswordField.getPassword());
+
+            // Validate inputs
+            if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+                JOptionPane.showMessageDialog(dialog, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            if (!newPassword.equals(confirmPassword)) {
+                JOptionPane.showMessageDialog(dialog, "New passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Validate current password
+            String query = "SELECT accPassword FROM accountdetails WHERE accUsername = ?";
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.setString(1, username);
+            ResultSet rs = pst.executeQuery();
+
+            if (rs.next()) {
+                String dbPassword = rs.getString("accPassword");
+                if (!dbPassword.equals(currentPassword)) {
+                    JOptionPane.showMessageDialog(dialog, "Current password is incorrect.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+            } else {
+                JOptionPane.showMessageDialog(dialog, "User not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Update password in the database
+            String updateQuery = "UPDATE accountdetails SET accPassword = ? WHERE accUsername = ?";
+            pst = con.prepareStatement(updateQuery);
+            pst.setString(1, newPassword);
+            pst.setString(2, username);
+
+            int rowsAffected = pst.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(dialog, "Password updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                dialog.dispose();
+            } else {
+                JOptionPane.showMessageDialog(dialog, "Failed to update password.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+
+        } catch (SQLException ex) {
+            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+            JOptionPane.showMessageDialog(dialog, "An error occurred: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    });
+
+    cancelButton.addActionListener(e -> dialog.dispose());
+
+    dialog.setVisible(true);
 }
 
     /**
@@ -134,7 +228,7 @@ public class Login extends javax.swing.JFrame {
         btnLogin = new javax.swing.JButton();
         jLabel5 = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
-        jLabel2 = new javax.swing.JLabel();
+        forgotBTN = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
@@ -223,9 +317,15 @@ public class Login extends javax.swing.JFrame {
         jLabel4.setFont(new java.awt.Font("Inknut Antiqua", 0, 10)); // NOI18N
         jLabel4.setForeground(new java.awt.Color(255, 255, 255));
 
-        jLabel2.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
-        jLabel2.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel2.setText("Forgot your password?");
+        forgotBTN.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+        forgotBTN.setForeground(new java.awt.Color(255, 255, 255));
+        forgotBTN.setText("Forgot your password?");
+        forgotBTN.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        forgotBTN.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseClicked(java.awt.event.MouseEvent evt) {
+                forgotBTNMouseClicked(evt);
+            }
+        });
 
         jLabel3.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/logo.jpg"))); // NOI18N
 
@@ -253,7 +353,7 @@ public class Login extends javax.swing.JFrame {
                         .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(txtLogPassword)
                             .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(jLabel2, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addComponent(forgotBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(jLabel5))
                             .addComponent(txtLogUsername))))
@@ -275,7 +375,7 @@ public class Login extends javax.swing.JFrame {
                     .addComponent(jLabel4)
                     .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                         .addComponent(jLabel5)
-                        .addComponent(jLabel2)))
+                        .addComponent(forgotBTN)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                 .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(225, Short.MAX_VALUE))
@@ -408,6 +508,42 @@ public class Login extends javax.swing.JFrame {
         }
     }//GEN-LAST:event_txtLogUsernameKeyPressed
 
+    private void forgotBTNMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_forgotBTNMouseClicked
+        // TODO add your handling code here:
+     String username = txtLogUsername.getText().trim();
+
+    if (username.isEmpty() || username.equals("Username")) {
+        JOptionPane.showMessageDialog(null, "Please enter your username in the Username field to proceed.");
+        return;
+    }
+
+    try {
+        // Check if the username exists in the database
+        String query = "SELECT accUsername FROM accountdetails WHERE accUsername = ?";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, username);
+
+        ResultSet rs = pst.executeQuery();
+
+        if (rs.next()) {
+            // Username exists, open the password change dialog
+            showPasswordChangeDialog(username);
+        } else {
+            // Username does not exist
+            JOptionPane.showMessageDialog(null, 
+                "The username \"" + username + "\" does not exist. Please try again.");
+        }
+
+        rs.close();
+        pst.close();
+    } catch (SQLException ex) {
+        Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        JOptionPane.showMessageDialog(null, 
+            "An error occurred while checking the username: " + ex.getMessage(), 
+            "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+    }//GEN-LAST:event_forgotBTNMouseClicked
+
     /**
      * @param args the command line arguments
      */
@@ -447,8 +583,8 @@ public class Login extends javax.swing.JFrame {
     
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JButton btnLogin;
+    private javax.swing.JLabel forgotBTN;
     private javax.swing.JLabel jLabel1;
-    private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JLabel jLabel5;

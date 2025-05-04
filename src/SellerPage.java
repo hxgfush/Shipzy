@@ -7,6 +7,7 @@
  *
  * @author 63995
  */
+import newPackage.Order;
 import newPackage.Product;
 import java.awt.BorderLayout;
 import java.awt.Color;
@@ -186,9 +187,218 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
         }
     }
 }   
+ 
+ 
+private JPanel createOrderCard(Order order) {
+    JPanel card = new JPanel();
+    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+    card.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+        BorderFactory.createEmptyBorder(15, 15, 15, 15)
+    ));
+    card.setBackground(new Color(69, 125, 88));
+    card.setPreferredSize(new Dimension(500, 200));
+
+    // Order ID
+    JLabel orderIdLabel = new JLabel("Order ID: " + order.getOrderId());
+    orderIdLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    orderIdLabel.setForeground(Color.WHITE);
+
+    // Buyer's Username
+    JLabel buyerLabel = new JLabel("Buyer: " + order.getUsername());
+    buyerLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    buyerLabel.setForeground(Color.WHITE);
+
+    // Product Name
+    JLabel productNameLabel = new JLabel("Product: " + order.getProductName());
+    productNameLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    productNameLabel.setForeground(Color.WHITE);
+
+    // Quantity and Total Amount
+    JLabel qtyLabel = new JLabel("Quantity: " + order.getQuantity());
+    qtyLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    qtyLabel.setForeground(Color.WHITE);
+
+    JLabel totalLabel = new JLabel("Total Amount: ₱" + String.format("%.2f", order.getTotalAmount()));
+    totalLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    totalLabel.setForeground(Color.WHITE);
+
+    // Buttons Panel
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    buttonPanel.setOpaque(false);
+
+    // Cancel Order Button
+    JButton cancelButton = new JButton("Cancel Order");
+    cancelButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    cancelButton.setBackground(new Color(200, 50, 50)); // Red color
+    cancelButton.setForeground(Color.WHITE);
+    cancelButton.setBorderPainted(false);
+    cancelButton.addActionListener(e -> cancelOrder(order, card)); // Call cancel logic
+    buttonPanel.add(cancelButton);
+
+    // Received Button
+    JButton receivedButton = new JButton("Received");
+    receivedButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    receivedButton.setBackground(new Color(50, 200, 50)); // Green color
+    receivedButton.setForeground(Color.WHITE);
+    receivedButton.setBorderPainted(false);
+    receivedButton.addActionListener(e -> markOrderAsReceived(order, card)); // Call received logic
+    buttonPanel.add(receivedButton);
+
+    // Add components to the card
+    card.add(orderIdLabel);
+    card.add(buyerLabel);
+    card.add(productNameLabel);
+    card.add(qtyLabel);
+    card.add(totalLabel);
+    card.add(buttonPanel); // Add the buttons panel at the bottom
+
+    return card;
+}
+ private void markOrderAsReceived(Order order, JPanel card) {
+    try {
+        String query = "UPDATE orders SET status = ? WHERE order_id = ?";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, "received"); // Update status to "received"
+        pst.setInt(2, order.getOrderId());
+
+        int rowsAffected = pst.executeUpdate();
+        if (rowsAffected > 0) {
+            JOptionPane.showMessageDialog(this, "Order marked as received.");
+            
+            // Optionally, update the UI to reflect the status change
+            JLabel statusLabel = new JLabel("Status: Received");
+            statusLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+            statusLabel.setForeground(Color.GREEN);
+            card.add(statusLabel);
+            card.revalidate();
+            card.repaint();
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to update order status. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
+}
+ private void cancelOrder(Order order, JPanel card) {
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to cancel this order?",
+        "Cancel Order",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        try {
+            String query = "DELETE FROM orders WHERE order_id = ?";
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.setInt(1, order.getOrderId());
+
+            int rowsAffected = pst.executeUpdate();
+            if (rowsAffected > 0) {
+                // Remove the order card from the UI
+                Container parent = card.getParent();
+                parent.remove(card);
+                parent.revalidate();
+                parent.repaint();
+
+                JOptionPane.showMessageDialog(this, "Order canceled successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Failed to cancel the order. Please try again.", "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+}
+ private void displayOrdersForStore() {
+    try {
+        orderTAB.removeAll();
+        orderTAB.addTab("Orders", new JLabel("Loading orders..."));
+
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            JPanel ordersPanel;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                Connection conn = getConnection();
+                List<Order> orders = getOrdersForStore(storename); // Fetch orders for this store
+
+                ordersPanel = new JPanel();
+                ordersPanel.setLayout(new BoxLayout(ordersPanel, BoxLayout.Y_AXIS));
+                ordersPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                ordersPanel.setBackground(new Color(62, 93, 59));
+
+                if (orders.isEmpty()) {
+                    ordersPanel.add(new JLabel("No orders found for your store"));
+                } else {
+                    for (Order order : orders) {
+                        JPanel orderCard = createOrderCard(order);
+                        orderCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        ordersPanel.add(orderCard);
+                        ordersPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get(); // Ensure background task completed successfully
+                    JScrollPane scrollPane = new JScrollPane(ordersPanel);
+                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                    scrollPane.setBackground(new Color(62, 93, 59));
+                    scrollPane.setBorder(null);
+
+                    orderTAB.removeAll();
+                    orderTAB.addTab("Store Orders", scrollPane);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(SellerPage.this,
+                        "Error loading orders: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error initializing order display: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
   
 
- 
+private List<Order> getOrdersForStore(String storename) throws SQLException {
+    List<Order> orders = new ArrayList<>();
+    String query = "SELECT order_id, username, product_name, store_name, price, quantity, total_amount, status " +
+                   "FROM orders WHERE store_name = ?";
+
+    try (PreparedStatement pst = con.prepareStatement(query)) {
+        pst.setString(1, storename); // Use the store name to filter orders
+        ResultSet rs = pst.executeQuery();
+
+        while (rs.next()) {
+            int orderId = rs.getInt("order_id");
+            String username = rs.getString("username"); // Buyer’s username
+            String productName = rs.getString("product_name");
+            String storeName = rs.getString("store_name");
+            double price = rs.getDouble("price");
+            int quantity = rs.getInt("quantity");
+            double totalAmount = rs.getDouble("total_amount");
+            String status = rs.getString("status"); // Fetch status
+
+            // Create an Order object and add it to the list
+            orders.add(new Order(orderId, username, productName, storeName, price, quantity, totalAmount, status));
+        }
+    }
+    return orders;
+}
     
 public class ProductDAO {
     private Connection con;
@@ -203,6 +413,7 @@ public class ProductDAO {
                "product_id, " +
                "product_name, " +
                "COALESCE(storename, 'Default Store') as storename, " +
+               "COALESCE(type, 'Unknown') as type, " + // Fetch the type field
                "COALESCE(tagline, '') as tagline, " +
                "price, " +
                "COALESCE(original_price, price) as original_price, " +
@@ -210,7 +421,7 @@ public class ProductDAO {
                "image2, " +
                "COALESCE(rating, 0.0) as rating, " +
                "COALESCE(location, '') as location " +
-               "FROM products WHERE storename = ?";
+               "FROM products";
         
         try (PreparedStatement stmt = con.prepareStatement(query)) {
             stmt.setString(1, storename);
@@ -227,8 +438,9 @@ public class ProductDAO {
                 byte[] image2 = rs.getBytes("image2");
                 double rating = rs.getDouble("rating");
                 String location = rs.getString("location");
+                String type = rs.getString("type");
                 
-                products.add(new Product(id, name, store, tagline, price, originalPrice, image1, image2, rating, location));
+                products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
             }
         }
         return products;
@@ -597,6 +809,8 @@ private void updateProductInDatabase(Product product) {
         jLabel1 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
         Order = new javax.swing.JPanel();
+        orderTAB = new javax.swing.JTabbedPane();
+        jLabel11 = new javax.swing.JLabel();
         Info = new javax.swing.JPanel();
         jLabel2 = new javax.swing.JLabel();
         infoBTNdelete = new javax.swing.JButton();
@@ -802,7 +1016,7 @@ private void updateProductInDatabase(Product product) {
                             .addGroup(MyproductsLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 578, Short.MAX_VALUE))
+                        .addGap(0, 623, Short.MAX_VALUE))
                     .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addContainerGap())
         );
@@ -818,22 +1032,35 @@ private void updateProductInDatabase(Product product) {
                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(631, Short.MAX_VALUE))
+                .addContainerGap(647, Short.MAX_VALUE))
         );
 
         parent.add(Myproducts, "card2");
 
         Order.setBackground(new java.awt.Color(62, 93, 59));
 
+        jLabel11.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        jLabel11.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel11.setText("Orders:");
+
         javax.swing.GroupLayout OrderLayout = new javax.swing.GroupLayout(Order);
         Order.setLayout(OrderLayout);
         OrderLayout.setHorizontalGroup(
             OrderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 777, Short.MAX_VALUE)
+            .addComponent(orderTAB)
+            .addGroup(OrderLayout.createSequentialGroup()
+                .addGap(18, 18, 18)
+                .addComponent(jLabel11, javax.swing.GroupLayout.PREFERRED_SIZE, 103, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(701, Short.MAX_VALUE))
         );
         OrderLayout.setVerticalGroup(
             OrderLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 1210, Short.MAX_VALUE)
+            .addGroup(OrderLayout.createSequentialGroup()
+                .addGap(27, 27, 27)
+                .addComponent(jLabel11)
+                .addGap(18, 18, 18)
+                .addComponent(orderTAB, javax.swing.GroupLayout.PREFERRED_SIZE, 509, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(640, Short.MAX_VALUE))
         );
 
         parent.add(Order, "card3");
@@ -1010,7 +1237,7 @@ private void updateProductInDatabase(Product product) {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addComponent(infoBTNdelete, javax.swing.GroupLayout.PREFERRED_SIZE, 151, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addComponent(editPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addContainerGap(173, Short.MAX_VALUE))
+                .addContainerGap(218, Short.MAX_VALUE))
         );
         InfoLayout.setVerticalGroup(
             InfoLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1025,7 +1252,7 @@ private void updateProductInDatabase(Product product) {
                     .addComponent(jToggleButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(editPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(743, Short.MAX_VALUE))
+                .addContainerGap(759, Short.MAX_VALUE))
         );
 
         parent.add(Info, "card4");
@@ -1139,6 +1366,7 @@ private void updateProductInDatabase(Product product) {
     }
     }//GEN-LAST:event_infoBTNdeleteActionPerformed
 
+    //INFORMATIONS
     private void infoBTNconfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoBTNconfirmActionPerformed
 
          // Get the new values from text fields
@@ -1188,10 +1416,8 @@ private void updateProductInDatabase(Product product) {
         JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
-}                                              
-                                          
-
-private void updateProductsStoreName(String oldStoreName, String newStoreName) {
+}                                                                                   
+    private void updateProductsStoreName(String oldStoreName, String newStoreName) {
     try {
         // First update the products in the database
         String query = "UPDATE products SET storename = ? WHERE storename = ?";
@@ -1249,6 +1475,7 @@ private void updateProductsStoreName(String oldStoreName, String newStoreName) {
         parent.add(Order);
         parent.repaint();
         parent.revalidate();
+         displayOrdersForStore();
     }//GEN-LAST:event_btnOrderActionPerformed
 
     private void btnProductsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProductsActionPerformed
@@ -1337,6 +1564,7 @@ private void updateProductsStoreName(String oldStoreName, String newStoreName) {
     private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
+    private javax.swing.JLabel jLabel11;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1353,6 +1581,7 @@ private void updateProductsStoreName(String oldStoreName, String newStoreName) {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JToggleButton jToggleButton1;
+    private javax.swing.JTabbedPane orderTAB;
     private javax.swing.JLabel owberLabel;
     private javax.swing.JPanel parent;
     // End of variables declaration//GEN-END:variables

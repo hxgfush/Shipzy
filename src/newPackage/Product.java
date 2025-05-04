@@ -1,126 +1,145 @@
 package newPackage;
 
-/**
- * Represents a product with all its details including images, pricing, and location.
- */
 public class Product {
-    private  int productId;
-    private  String productName;
-    private  String storeName;
-    private  String tagline;
-    private  double price;
-    private final double originalPrice;
-    private final byte[] image1;
-    private final byte[] image2;
-    private final double rating;
-    private final String location;
+    private int productId;          // Unique ID for the product
+    private String productName;     // Name of the product
+    private String storeName;       // Name of the store selling the product
+    private String type;            // Type of product (e.g., Electronics, Clothing, etc.)
+    private String tagline;         // Short description or tagline for the product
+    private double price;           // Current price of the product
+    private double originalPrice;   // Original price of the product (for discounts)
+    private byte[] image1;          // First image of the product
+    private byte[] image2;          // Second image of the product
+    private double rating;          // Average rating of the product
+    private String location;        // Location associated with the product
 
-    /**
-     * Constructs a Product with all details.
-     * 
-     * @param productId Unique product identifier
-     * @param productName Name of the product
-     * @param storeName Name of the store selling the product
-     * @param tagline Short description or tagline
-     * @param price Current selling price
-     * @param originalPrice Original price (for showing discounts)
-     * @param image1 Primary product image
-     * @param image2 Secondary product image
-     * @param rating Product rating (0-5)
-     * @param location Product/store location
-     */
-    public Product(int productId, String productName, String storeName, String tagline, 
-                  double price, double originalPrice, byte[] image1, byte[] image2, 
-                  double rating, String location) {
-        if (productName == null || productName.trim().isEmpty()) {
-            throw new IllegalArgumentException("Product name cannot be empty");
-        }
-        if (price < 0 || originalPrice < 0) {
-            throw new IllegalArgumentException("Price cannot be negative");
-        }
-        if (rating < 0 || rating > 5) {
-            throw new IllegalArgumentException("Rating must be between 0 and 5");
-        }
-
+    // Constructor
+    public Product(int productId, String productName, String storeName, String type, String tagline,
+                   double price, double originalPrice, byte[] image1, byte[] image2, double rating, String location) {
         this.productId = productId;
-        this.productName = productName.trim();
-        this.storeName = storeName != null ? storeName.trim() : "";
-        this.tagline = tagline != null ? tagline.trim() : "";
+        this.productName = productName;
+        this.storeName = storeName;
+        this.type = type;
+        this.tagline = tagline;
         this.price = price;
         this.originalPrice = originalPrice;
-        this.image1 = image1 != null ? image1 : new byte[0];
-        this.image2 = image2 != null ? image2 : new byte[0];
+        this.image1 = image1;
+        this.image2 = image2;
         this.rating = rating;
-        this.location = location != null ? location.trim() : "";
+        this.location = location;
     }
 
-    // Getters only (immutable)
-    public int getProductId() { return productId; }
-    
+    // Getters
+    public int getProductId() {
+        return productId;
+    }
+
     public String getProductName() {
         return productName;
     }
-    
-    public String getTagline() {
-        return tagline;
-    }
-    
+
     public String getStoreName() {
         return storeName;
     }
-    
-    public double getPrice() { return price; }
-    public double getOriginalPrice() { return originalPrice; }
-    
-    public byte[] getImage1() { 
-        return image1 != null ? image1.clone() : new byte[0]; 
-    }
-    
-    public byte[] getImage2() { 
-        return image2 != null ? image2.clone() : new byte[0]; 
-    }
-    
-    public double getRating() { return rating; }
-    public String getLocation() { return location; }
 
-    /**
-     * Returns whether the product is on discount.
-     */
-    public boolean isOnDiscount() {
-        return originalPrice > price;
+    public String getType() {
+        return type;
     }
 
-    /**
-     * Calculates discount percentage.
-     */
+    public String getTagline() {
+        return tagline;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public double getOriginalPrice() {
+        return originalPrice;
+    }
+
+    public byte[] getImage1() {
+        return image1;
+    }
+
+    public byte[] getImage2() {
+        return image2;
+    }
+
+    public double getRating() {
+        return rating;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    // Setters
+    public void setProductId(int productId) {
+        this.productId = productId;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public void setStoreName(String storeName) {
+        this.storeName = storeName;
+    }
+
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public void setTagline(String tagline) {
+        this.tagline = tagline;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
+    public void setOriginalPrice(double originalPrice) {
+        this.originalPrice = originalPrice;
+    }
+
+    public void setImage1(byte[] image1) {
+        this.image1 = image1;
+    }
+
+    public void setImage2(byte[] image2) {
+        this.image2 = image2;
+    }
+
+    public void setRating(double rating) {
+        this.rating = rating;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
+    }
+
+    // Method to calculate the discount percentage
     public double getDiscountPercentage() {
-        return isOnDiscount() ? 
-               ((originalPrice - price) / originalPrice) * 100 : 0;
+        if (originalPrice > price) {
+            return 100 * (originalPrice - price) / originalPrice;
+        }
+        return 0;
     }
 
+    // Override toString for debugging purposes
     @Override
     public String toString() {
-        return String.format(
-            "Product[id=%d, name='%s', store='%s', price=%.2f, rating=%.1f]",
-            productId, productName, storeName, price, rating
-        );
+        return "Product{" +
+                "productId=" + productId +
+                ", productName='" + productName + '\'' +
+                ", storeName='" + storeName + '\'' +
+                ", type='" + type + '\'' +
+                ", tagline='" + tagline + '\'' +
+                ", price=" + price +
+                ", originalPrice=" + originalPrice +
+                ", rating=" + rating +
+                ", location='" + location + '\'' +
+                '}';
     }
-   public void setProductName(String productName) {
-    if (productName == null || productName.trim().isEmpty()) {
-        throw new IllegalArgumentException("Product name cannot be empty");
-    }
-    this.productName = productName.trim();
-}
-
-public void setTagline(String tagline) {
-    this.tagline = tagline != null ? tagline.trim() : "";
-}
-
-public void setPrice(double price) {
-    if (price < 0) {
-        throw new IllegalArgumentException("Price cannot be negative");
-    }
-    this.price = price;
-}
- 
 }
