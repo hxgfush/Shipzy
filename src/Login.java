@@ -340,39 +340,40 @@ public class Login extends javax.swing.JFrame {
 
     private void btnLoginActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnLoginActionPerformed
         try {
-            String username, password;
-            username = txtLogUsername.getText();
-            char[] passwordChars  = txtLogPassword.getPassword();
-            password = new String(passwordChars);
+        String username, password;
+        username = txtLogUsername.getText();
+        char[] passwordChars = txtLogPassword.getPassword();
+        password = new String(passwordChars);
 
-            // Modified query to select firstname and lastname
-            String queryLogin = "SELECT Firstname, Lastname FROM accountdetails WHERE accUsername = ? AND accPassword = ?";
-            PreparedStatement pst = con.prepareStatement(queryLogin);
-            pst.setString(1, username);
-            pst.setString(2, password);
+        // Query to select firstname, lastname, and accUsername
+        String queryLogin = "SELECT Firstname, Lastname, accUsername FROM accountdetails WHERE accUsername = ? AND accPassword = ?";
+        PreparedStatement pst = con.prepareStatement(queryLogin);
+        pst.setString(1, username);
+        pst.setString(2, password);
 
-            ResultSet rs = pst.executeQuery();
+        ResultSet rs = pst.executeQuery();
 
-            if (rs.next()) {
-                // Retrieve firstname and lastname
-                String firstname = rs.getString("Firstname");
-                String lastname = rs.getString("Lastname");
+        if (rs.next()) {
+            // Retrieve firstname, lastname, and username
+            String firstname = rs.getString("Firstname");
+            String lastname = rs.getString("Lastname");
+            String Username = rs.getString("accUsername");
 
-                // Show the message dialog with full name
-                JOptionPane.showMessageDialog(null, "Welcome, " + firstname + " " + lastname + "!");
+            // Show the message dialog with full name
+            JOptionPane.showMessageDialog(null, "Welcome, " + lastname + " " + firstname + "!");
 
-                Homepage home = new Homepage();  // Assuming HomePage is your next frame
-                home.setVisible(true);
-                home.setLocationRelativeTo(null);
-                this.dispose(); // Close the login frame
+            // Pass the names and username to the Homepage constructor
+            Homepage home = new Homepage(firstname, lastname, Username);
+            home.setVisible(true);
+            home.setLocationRelativeTo(null);
+            this.dispose(); // Close the login frame
 
-            } else {
-                JOptionPane.showMessageDialog(null, "Invalid Credentials");
-            }
-        } catch (SQLException ex) {
-            Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+        } else {
+            JOptionPane.showMessageDialog(null, "Invalid Credentials");
         }
-
+    } catch (SQLException ex) {
+        Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
+    }
     }//GEN-LAST:event_btnLoginActionPerformed
 
     private void txtLogPasswordActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtLogPasswordActionPerformed

@@ -20,12 +20,14 @@ import javax.swing.JOptionPane;
 public class SellerHopIn extends javax.swing.JFrame {
 
     private static Homepage homepage; 
+    private String username;
 
     /**
      * Creates new form SellerHopIn
      */
-    public SellerHopIn(Homepage homepage) {
+    public SellerHopIn(Homepage homepage, String Username) {
         this.homepage = homepage;
+        this.username = Username;
            initComponents();
         try {
             Connection();
@@ -78,7 +80,7 @@ public class SellerHopIn extends javax.swing.JFrame {
         jLabel2 = new javax.swing.JLabel();
         jLabel3 = new javax.swing.JLabel();
         Register = new javax.swing.JLabel();
-        jButton1 = new javax.swing.JButton();
+        Hopin = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -122,13 +124,13 @@ public class SellerHopIn extends javax.swing.JFrame {
             }
         });
 
-        jButton1.setBackground(new java.awt.Color(69, 125, 88));
-        jButton1.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
-        jButton1.setForeground(new java.awt.Color(255, 255, 255));
-        jButton1.setText("Hop In");
-        jButton1.addActionListener(new java.awt.event.ActionListener() {
+        Hopin.setBackground(new java.awt.Color(69, 125, 88));
+        Hopin.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
+        Hopin.setForeground(new java.awt.Color(255, 255, 255));
+        Hopin.setText("Hop In");
+        Hopin.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton1ActionPerformed(evt);
+                HopinActionPerformed(evt);
             }
         });
 
@@ -142,7 +144,7 @@ public class SellerHopIn extends javax.swing.JFrame {
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addComponent(Register)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 136, Short.MAX_VALUE)
-                        .addComponent(jButton1))
+                        .addComponent(Hopin))
                     .addComponent(txtHopSellerid)
                     .addComponent(jLabel3)
                     .addComponent(jLabel2)
@@ -168,7 +170,7 @@ public class SellerHopIn extends javax.swing.JFrame {
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(Register)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(Hopin, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addContainerGap(228, Short.MAX_VALUE))
         );
 
@@ -190,9 +192,9 @@ public class SellerHopIn extends javax.swing.JFrame {
         // TODO add your handling code here:
     }//GEN-LAST:event_txtHopStorenameActionPerformed
 
-    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+    private void HopinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HopinActionPerformed
         // TODO add your handling code here:
-     try {
+   try {
         String storename = txtHopStorename.getText();
         String sellerid = txtHopSellerid.getText();
 
@@ -205,9 +207,13 @@ public class SellerHopIn extends javax.swing.JFrame {
         if (rs.next()) {
             String Storename = rs.getString("Storename");
             String Name = rs.getString("Name");
+            String Location = rs.getString("Location"); // Get the location from database
+            int ID = rs.getInt("Sellerid");
+            String Contacts = rs.getString("Contact");
             
             if (Storename != null && Name != null) {
-                var seller = new SellerPage(storename, Name);
+                // Pass the location to SellerPage
+                SellerPage seller = new SellerPage(storename, Name, Location, ID, Contacts);
                 seller.setLocationRelativeTo(null);
                 seller.setVisible(true);
                 
@@ -227,12 +233,12 @@ public class SellerHopIn extends javax.swing.JFrame {
     } catch (SQLException ex) {
         Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         JOptionPane.showMessageDialog(null, "Database error: " + ex.getMessage());
-    }                  
-    }//GEN-LAST:event_jButton1ActionPerformed
+    }                     
+    }//GEN-LAST:event_HopinActionPerformed
 
     private void RegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_RegisterMouseClicked
         // TODO add your handling code here:
-        var register = new SellerRegistration();
+        var register = new SellerRegistration(homepage, username);
         register.setVisible(true);
         register.pack();
         register.setLocationRelativeTo(null);
@@ -273,14 +279,15 @@ public class SellerHopIn extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SellerHopIn(homepage).setVisible(true);
+                String Username = null;
+                new SellerHopIn(homepage, Username).setVisible(true);
             }
         });
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton Hopin;
     private javax.swing.JLabel Register;
-    private javax.swing.JButton jButton1;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;

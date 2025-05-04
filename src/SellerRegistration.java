@@ -19,12 +19,17 @@ import javax.swing.JOptionPane;
 import java.sql.PreparedStatement;
 
 public class SellerRegistration extends javax.swing.JFrame {
-
+        
+        private String username;
+        private Homepage homepage;
     /**
      * Creates new form SellerRegistration
      */
-    public SellerRegistration() {
+    public SellerRegistration(Homepage Homepage, String Username) {
+         this.username = Username;
+         this.homepage = Homepage;
           initComponents();
+        txtName.setText(username);
         try {
             Connection();
         } catch (SQLException ex) {
@@ -85,7 +90,7 @@ public class SellerRegistration extends javax.swing.JFrame {
         jLabel7 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
-        setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jPanel2.setBackground(new java.awt.Color(52, 70, 49));
 
@@ -113,6 +118,7 @@ public class SellerRegistration extends javax.swing.JFrame {
             }
         });
 
+        txtName.setEditable(false);
         txtName.setBackground(new java.awt.Color(255, 255, 255));
         txtName.setForeground(new java.awt.Color(0, 0, 0));
         txtName.addActionListener(new java.awt.event.ActionListener() {
@@ -238,10 +244,10 @@ public class SellerRegistration extends javax.swing.JFrame {
     }// </editor-fold>//GEN-END:initComponents
 
     private void jLabel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel7MouseClicked
-        Homepage homerpage = null;
-        // TODO add your handling code here:
 
-        var sellerhop = new SellerHopIn(homerpage);
+            // TODO add your handling code here:
+         String Username = username;
+        var sellerhop = new SellerHopIn(homepage, Username);
         sellerhop.setVisible(true);
         sellerhop.pack();
         sellerhop.setLocationRelativeTo(null);
@@ -325,7 +331,7 @@ public class SellerRegistration extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -352,7 +358,8 @@ public class SellerRegistration extends javax.swing.JFrame {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
-                new SellerRegistration().setVisible(true);
+                String Username = null;
+                new SellerRegistration(homepage, Username).setVisible(true);
             }
         });
     }
