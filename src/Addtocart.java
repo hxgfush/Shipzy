@@ -598,50 +598,24 @@ private void setProductImage(byte[] imageData) {
         int quantity = (Integer) spinner.getValue();
         double totalAmount = Double.parseDouble(total.getText().replace("₱", ""));
         
-        // Check if the product already exists in the cart for this user
-        String checkQuery = "SELECT * FROM cart WHERE username = ? AND product_name = ?";
-        PreparedStatement checkPst = con.prepareStatement(checkQuery);
-        checkPst.setString(1, username);
-        checkPst.setString(2, product.getProductName());
-        ResultSet rs = checkPst.executeQuery();
+        // Always insert as a new cart item, even if same product exists
+        String insertQuery = "INSERT INTO cart (username, product_name, store_name, price, quantity, total_amount) VALUES (?, ?, ?, ?, ?, ?)";
+        PreparedStatement insertPst = con.prepareStatement(insertQuery);
+        insertPst.setString(1, username);
+        insertPst.setString(2, product.getProductName());
+        insertPst.setString(3, product.getStoreName());
+        insertPst.setDouble(4, product.getPrice());
+        insertPst.setInt(5, quantity);
+        insertPst.setDouble(6, totalAmount);
+        insertPst.executeUpdate();
         
-        if (rs.next()) {
-            // Product exists, update quantity and total
-            int existingQuantity = rs.getInt("quantity");
-            double existingTotal = rs.getDouble("total_amount");
-            
-            String updateQuery = "UPDATE cart SET quantity = ?, total_amount = ? WHERE username = ? AND product_name = ?";
-            PreparedStatement updatePst = con.prepareStatement(updateQuery);
-            updatePst.setInt(1, existingQuantity + quantity);
-            updatePst.setDouble(2, existingTotal + totalAmount);
-            updatePst.setString(3, username);
-            updatePst.setString(4, product.getProductName());
-            updatePst.executeUpdate();
-            
-            JOptionPane.showMessageDialog(this, "Product quantity updated in your cart!");
-        } else {
-            // Product doesn't exist, insert new record
-            String insertQuery = "INSERT INTO cart (username, product_name, store_name, price, quantity, total_amount) VALUES (?, ?, ?, ?, ?, ?)";
-            PreparedStatement insertPst = con.prepareStatement(insertQuery);
-            insertPst.setString(1, username);
-            insertPst.setString(2, product.getProductName());
-            insertPst.setString(3, product.getStoreName());
-            insertPst.setDouble(4, product.getPrice());
-            insertPst.setInt(5, quantity);
-            insertPst.setDouble(6, totalAmount);
-            insertPst.executeUpdate();
-            
-            JOptionPane.showMessageDialog(this, "Product added to cart successfully!");
-            this.dispose();
-        }
+        JOptionPane.showMessageDialog(this, "Product added to cart successfully!");
+        this.dispose();
         
     } catch (SQLException ex) {
         Logger.getLogger(Addtocart.class.getName()).log(Level.SEVERE, null, ex);
         JOptionPane.showMessageDialog(this, "Error adding to cart: " + ex.getMessage());
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(this, "Error parsing total amount: " + ex.getMessage());
-    }  
-        
+    } 
         
     }//GEN-LAST:event_addTOcartBTNActionPerformed
 

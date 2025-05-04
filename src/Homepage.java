@@ -334,7 +334,7 @@ public class WrapLayout extends FlowLayout { //This block of code is used to ara
     }
 }   
  
-
+//methods
 private void deleteCartItem(CartItem item) {
     try {
         String query = "DELETE FROM cart WHERE cart_id = ?";
@@ -352,15 +352,99 @@ private void deleteCartItem(CartItem item) {
             "Error", JOptionPane.ERROR_MESSAGE);
     }
 }
-
+private void editOrder(Order order) {
+    try {
+        // Open a dialog to edit the order quantity
+        String newQtyStr = JOptionPane.showInputDialog(this, 
+            "Edit quantity for " + order.getProductName() + ":", 
+            order.getQuantity());
+        
+        if (newQtyStr != null && !newQtyStr.isEmpty()) {
+            int newQty = Integer.parseInt(newQtyStr);
+            if (newQty > 0) {
+                // Update the order in database
+                String query = "UPDATE orders SET quantity = ?, total_amount = ? WHERE order_id = ?";
+                PreparedStatement pst = con.prepareStatement(query);
+                pst.setInt(1, newQty);
+                pst.setDouble(2, order.getPrice() * newQty);
+                pst.setInt(3, order.getOrderId());
+                
+                int rowsAffected = pst.executeUpdate();
+                if (rowsAffected > 0) {
+                    JOptionPane.showMessageDialog(this, "Order updated successfully");
+                    loadOrders(); // Refresh the order list
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Quantity must be greater than 0");
+            }
+        }
+    } catch (NumberFormatException ex) {
+        JOptionPane.showMessageDialog(this, "Please enter a valid number", "Error", JOptionPane.ERROR_MESSAGE);
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Error updating order: " + ex.getMessage(),
+            "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
 private void checkoutCartItem(CartItem item) {
-    // Implement your checkout logic here
-    JOptionPane.showMessageDialog(this, 
-        "Checkout for: " + item.getProductName(),
-        "Check Out", JOptionPane.INFORMATION_MESSAGE);
+    try {
+        // Insert into orders table
+        String query = "INSERT INTO orders (username, product_name, store_name, price, quantity, total_amount) " +
+                      "VALUES (?, ?, ?, ?, ?, ?)";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, username);
+        pst.setString(2, item.getProductName());
+        pst.setString(3, item.getStoreName());
+        pst.setDouble(4, item.getPrice());
+        pst.setInt(5, item.getQuantity());
+        pst.setDouble(6, item.getPrice() * item.getQuantity()); // Calculate total
+        
+        int rowsAffected = pst.executeUpdate();
+        
+        if (rowsAffected > 0) {
+            // Remove from cart after successful checkout
+            deleteCartItem(item);
+            JOptionPane.showMessageDialog(this, "Checkout successful! Order has been placed.");
+        } else {
+            JOptionPane.showMessageDialog(this, "Failed to checkout item", "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Error during checkout: " + ex.getMessage(),
+            "Database Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+private void cancelOrder(Order order) {
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to cancel order #" + order.getOrderId() + "?",
+        "Confirm Cancellation",
+        JOptionPane.YES_NO_OPTION);
+    
+    if (confirm == JOptionPane.YES_OPTION) {
+        try {
+            String query = "DELETE FROM orders WHERE order_id = ?";
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.setInt(1, order.getOrderId()); // Use order ID instead of product name
+            
+            int rowsAffected = pst.executeUpdate();
+            if (rowsAffected > 0) {
+                JOptionPane.showMessageDialog(this, 
+                    "Order #" + order.getOrderId() + " cancelled successfully");
+                loadOrders(); // Refresh the order list
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "Failed to cancel order #" + order.getOrderId());
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Database error: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
 }
 
-  //Loaders  
+//Loaders  
 private void loadCart() {
     SwingWorker<List<CartItem>, Void> worker = new SwingWorker<List<CartItem>, Void>() {
         @Override
@@ -616,6 +700,7 @@ private void displayCart(List<CartItem> cartItems) {
     cartTab.repaint();
 }
 
+//creator
 private JPanel createCartItemPanel(CartItem item) {
     // Create a fixed-size card panel with BorderLayout
     JPanel panel = new JPanel(new BorderLayout(10, 0));
@@ -628,7 +713,7 @@ private JPanel createCartItemPanel(CartItem item) {
         BorderFactory.createEmptyBorder(10, 15, 10, 15)
     ));
 
-    // Left side - Product info (using GridBagLayout for precise control)
+    // Left side - Cart item info (using GridBagLayout for precise control)
     JPanel infoPanel = new JPanel(new GridBagLayout());
     infoPanel.setBackground(new Color(69, 125, 88));
     GridBagConstraints gbc = new GridBagConstraints();
@@ -639,28 +724,29 @@ private JPanel createCartItemPanel(CartItem item) {
     gbc.gridy = 0;
     gbc.insets = new Insets(0, 0, 5, 0);
 
-    // Product name with bold font
+    // Cart ID with bold font
+    JLabel idLabel = new JLabel("Cart ID: " + item.getCartId());
+    idLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    idLabel.setForeground(Color.WHITE);
+    infoPanel.add(idLabel, gbc);
+
+    // Product name
+    gbc.gridy++;
     JLabel nameLabel = new JLabel(item.getProductName());
-    nameLabel.setFont(new Font("Arial", Font.BOLD, 14));
+    nameLabel.setFont(new Font("Arial", Font.PLAIN, 12));
     nameLabel.setForeground(Color.WHITE);
     infoPanel.add(nameLabel, gbc);
 
-    // Store name
+    // Store name and price
     gbc.gridy++;
-    JLabel storeLabel = new JLabel("From: " + item.getStoreName());
-    storeLabel.setFont(new Font("Arial", Font.PLAIN, 12));
-    storeLabel.setForeground(Color.WHITE);
-    infoPanel.add(storeLabel, gbc);
-
-    // Price and quantity
-    gbc.gridy++;
-    JLabel priceLabel = new JLabel(String.format("₱%.2f × %d", item.getPrice(), item.getQuantity()));
-    priceLabel.setFont(new Font("Arial", Font.BOLD, 12));
-    priceLabel.setForeground(Color.WHITE);
-    infoPanel.add(priceLabel, gbc);
+    JLabel detailsLabel = new JLabel(String.format("From: %s | ₱%.2f × %d", 
+        item.getStoreName(), item.getPrice(), item.getQuantity()));
+    detailsLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+    detailsLabel.setForeground(Color.WHITE);
+    infoPanel.add(detailsLabel, gbc);
 
     // Right side - Buttons panel
-   JPanel buttonPanel = new JPanel(new GridBagLayout());
+    JPanel buttonPanel = new JPanel(new GridBagLayout());
     buttonPanel.setBackground(new Color(69, 125, 88));
     GridBagConstraints gbcButtons = new GridBagConstraints();
     gbcButtons.insets = new Insets(0, 10, 0, 0);
@@ -698,7 +784,7 @@ private JPanel createCartItemPanel(CartItem item) {
 private JPanel createOrderCard(Order order) {
     // Create a fixed-size card panel
     JPanel card = new JPanel(new BorderLayout(15, 0));
-    card.setPreferredSize(new Dimension(900, 150)); // Smaller than product cards
+    card.setPreferredSize(new Dimension(900, 150));
     card.setMaximumSize(new Dimension(900, 150));
     card.setMinimumSize(new Dimension(900, 150));
     card.setBackground(new Color(69, 125, 88));
@@ -709,7 +795,7 @@ private JPanel createOrderCard(Order order) {
     leftPanel.setBackground(new Color(69, 125, 88));
     leftPanel.setPreferredSize(new Dimension(600, 130));
 
-     JLabel orderIdLabel = new JLabel("Order #" + order.getOrderId());
+    JLabel orderIdLabel = new JLabel("Order #" + order.getOrderId());
     orderIdLabel.setFont(new Font("Arial", Font.BOLD, 14));
     orderIdLabel.setForeground(Color.WHITE);
     leftPanel.add(orderIdLabel, 0);
@@ -748,16 +834,30 @@ private JPanel createOrderCard(Order order) {
     totalLabel.setForeground(Color.WHITE);
     leftPanel.add(totalLabel);
 
-    // Right Panel - Cancel button
-    JPanel rightPanel = new JPanel();
+    // Right Panel - Buttons
+    JPanel rightPanel = new JPanel(new GridLayout(2, 1, 0, 10));
     rightPanel.setBackground(new Color(69, 125, 88));
     rightPanel.setPreferredSize(new Dimension(200, 130));
 
+    // Edit button - Standardized size
+    JButton editButton = new JButton("Edit Order");
+    editButton.setPreferredSize(new Dimension(50, 25)); // Same size as cart card buttons
+    editButton.setFont(new Font("Arial", Font.BOLD, 12));
+    editButton.setBackground(new Color(102, 178, 255)); // Blue color
+    editButton.setForeground(Color.WHITE);
+    editButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    editButton.setFocusPainted(false);
+    editButton.addActionListener(e -> editOrder(order));
+    rightPanel.add(editButton);
+
+    // Cancel button - Standardized size
     JButton cancelButton = new JButton("Cancel Order");
-    cancelButton.setPreferredSize(new Dimension(120, 30));
+    cancelButton.setPreferredSize(new Dimension(100, 30)); // Same size as cart card buttons
     cancelButton.setFont(new Font("Arial", Font.BOLD, 12));
     cancelButton.setBackground(new Color(255, 102, 102)); // Red color
     cancelButton.setForeground(Color.WHITE);
+    cancelButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    cancelButton.setFocusPainted(false);
     cancelButton.addActionListener(e -> cancelOrder(order));
     rightPanel.add(cancelButton);
 
@@ -766,36 +866,6 @@ private JPanel createOrderCard(Order order) {
     card.add(rightPanel, BorderLayout.EAST);
 
     return card;
-}
-
-private void cancelOrder(Order order) {
-    int confirm = JOptionPane.showConfirmDialog(
-        this,
-        "Are you sure you want to cancel order #" + order.getOrderId() + "?",
-        "Confirm Cancellation",
-        JOptionPane.YES_NO_OPTION);
-    
-    if (confirm == JOptionPane.YES_OPTION) {
-        try {
-            String query = "DELETE FROM orders WHERE order_id = ?";
-            PreparedStatement pst = con.prepareStatement(query);
-            pst.setInt(1, order.getOrderId()); // Use order ID instead of product name
-            
-            int rowsAffected = pst.executeUpdate();
-            if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(this, 
-                    "Order #" + order.getOrderId() + " cancelled successfully");
-                loadOrders(); // Refresh the order list
-            } else {
-                JOptionPane.showMessageDialog(this, 
-                    "Failed to cancel order #" + order.getOrderId());
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Database error: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    }
 }
 private void displayProducts(List<Product> products) {
     // Create a main panel that will hold all product cards
@@ -838,8 +908,6 @@ private void displayProducts(List<Product> products) {
     jTabbedPane2.repaint();
     System.out.println("gay");  
 }
-
-
 private JPanel createProductCard(Product product) {
     // Create a fixed-size card panel
     JPanel card = new JPanel(new BorderLayout(15, 0));
@@ -1001,8 +1069,9 @@ private JPanel createProductCard(Product product) {
     return card;
 }
 
-
-  public Homepage getInstance(String firstname, String lastname) {
+    
+//Get instnance
+public Homepage getInstance(String firstname, String lastname) {
         if (homepage == null) {
             homepage = new Homepage(firstName, lastName, username);
         }
@@ -1194,7 +1263,7 @@ private JPanel createProductCard(Product product) {
 
         btnCart.setBackground(new java.awt.Color(69, 125, 88));
         btnCart.setForeground(new java.awt.Color(255, 255, 255));
-        btnCart.setText("ADD TO CART");
+        btnCart.setText("MY CART");
         btnCart.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnCartActionPerformed(evt);
