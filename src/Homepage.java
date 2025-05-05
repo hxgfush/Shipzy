@@ -68,7 +68,7 @@ public class Homepage extends javax.swing.JFrame {
     /**
      * Creates new form Homepage
      */
-    public Homepage(String firstName, String lastName, String Username) {
+    public Homepage(Homepage homepage, String firstName, String lastName, String Username) {
         homepage = this;
         this.username = Username;
         this.firstName = firstName;
@@ -1488,7 +1488,7 @@ private JPanel createProductCard(Product product) {
 //Get instnance
 public Homepage getInstance(String firstname, String lastname) {
         if (homepage == null) {
-            homepage = new Homepage(firstName, lastName, username);
+            homepage = new Homepage(homepage, firstName, lastName, username);
         }
         return homepage;
     }
@@ -2199,7 +2199,9 @@ public Homepage getInstance(String firstname, String lastname) {
         if (rs.next()) {
             // If a store is found, open SellerHopIn
             String storename = rs.getString("Storename");
-            SellerHopIn hop = new SellerHopIn(homepage, username);
+            String firstname = firstName;
+            String lastname = lastName;
+            SellerHopIn hop = new SellerHopIn(this, username, firstname, lastname);
             hop.setVisible(true);
             hop.pack();
             hop.setLocationRelativeTo(null);
@@ -2214,7 +2216,7 @@ public Homepage getInstance(String firstname, String lastname) {
 
             if (confirm == JOptionPane.YES_OPTION) {
                 // Open the SellerRegistration form
-                SellerRegistration register = new SellerRegistration(homepage, username);
+                SellerRegistration register = new SellerRegistration(homepage, username, firstName, lastName);
                 register.setVisible(true);
                 register.pack();
                 register.setLocationRelativeTo(null);
@@ -2237,18 +2239,74 @@ public Homepage getInstance(String firstname, String lastname) {
 
     private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         // TODO add your handling code here:
-         String searchTerm = txtSearch.getText().trim();
+            String searchTerm = txtSearch.getText().trim();
     if (!searchTerm.isEmpty()) {
-        try {
-            loadProducts(searchTerm);
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Error searching products: " + ex.getMessage(),
-                "Search Error", JOptionPane.ERROR_MESSAGE);
-        }
+        loadProductsBySearch(searchTerm); // Use the new search method
     } else {
         loadProducts(); // Load all products if search term is empty
     }
+}                                            
+
+private void loadProductsBySearch(String searchTerm) {
+    SwingWorker<List<Product>, Void> worker = new SwingWorker<>() {
+        @Override
+        protected List<Product> doInBackground() throws Exception {
+            List<Product> products = new ArrayList<>();
+            
+            try {
+                String query = "SELECT " +
+                   "product_id, product_name, " +
+                   "COALESCE(storename, 'Default Store') as storename, " +
+                   "COALESCE(type, 'Unknown') as type, " +
+                   "COALESCE(tagline, '') as tagline, " +
+                   "price, COALESCE(original_price, price) as original_price, " +
+                   "image1, image2, COALESCE(rating, 0.0) as rating, " +
+                   "COALESCE(location, '') as location " +
+                   "FROM products WHERE product_name LIKE ? " +
+                   "ORDER BY product_id DESC";
+
+                PreparedStatement pst = con.prepareStatement(query);
+                pst.setString(1, "%" + searchTerm + "%"); // Partial match search
+                
+                ResultSet rs = pst.executeQuery();
+                
+                while (rs.next()) {
+                    products.add(new Product(
+                        rs.getInt("product_id"),
+                        rs.getString("product_name"),
+                        rs.getString("storename"),
+                        rs.getString("type"),
+                        rs.getString("tagline"),
+                        rs.getDouble("price"),
+                        rs.getDouble("original_price"),
+                        rs.getBytes("image1"),
+                        rs.getBytes("image2"),
+                        rs.getDouble("rating"),
+                        rs.getString("location")
+                    ));
+                }
+            } catch (SQLException ex) {
+                Logger.getLogger(Homepage.class.getName()).log(Level.SEVERE, null, ex);
+                JOptionPane.showMessageDialog(Homepage.this, 
+                    "Error searching products: " + ex.getMessage(), 
+                    "Search Error", JOptionPane.ERROR_MESSAGE);
+            }
+            return products;
+        }
+        
+        @Override
+        protected void done() {
+            try {
+                List<Product> products = get();
+                displayProducts(products);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(Homepage.this, 
+                    "Error: " + ex.getMessage(), 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+    };
+    worker.execute();
     }//GEN-LAST:event_searchButtonActionPerformed
 
     private void btnOrderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOrderActionPerformed
@@ -2328,10 +2386,11 @@ public Homepage getInstance(String firstname, String lastname) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
+                Homepage homepage = null;
                 String firstname = null;
                 String lastname = null;
                 String Username = null;
-                new Homepage(firstname, lastname, Username).setVisible(true);
+                new Homepage(homepage, firstname, lastname, Username).setVisible(true);
             }
         });
     }

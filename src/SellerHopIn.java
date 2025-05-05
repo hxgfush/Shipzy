@@ -19,15 +19,19 @@ import javax.swing.JOptionPane;
  */
 public class SellerHopIn extends javax.swing.JFrame {
 
-    private static Homepage homepage; 
+    private Homepage homepage; 
     private String username;
+    private String firstname;
+    private String lastname;
 
     /**
      * Creates new form SellerHopIn
      */
-    public SellerHopIn(Homepage homepage, String Username) {
+    public SellerHopIn(Homepage homepage, String Username, String Firstname, String Lastname) {
         this.homepage = homepage;
         this.username = Username;
+        this.firstname = Firstname;
+        this.lastname = Lastname;
            initComponents();
         try {
             Connection();
@@ -193,35 +197,38 @@ public class SellerHopIn extends javax.swing.JFrame {
     }//GEN-LAST:event_txtHopStorenameActionPerformed
 
     private void HopinActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_HopinActionPerformed
-        // TODO add your handling code here:
      try {
         String storename = txtHopStorename.getText().trim();
         String sellerid = txtHopSellerid.getText().trim();
+        String Username = username;
 
         // Check if the store exists for the given username and seller ID
         String queryLogin = "SELECT * FROM sellermanager WHERE Storename = ? AND Sellerid = ? AND Username = ?";
         PreparedStatement pst = con.prepareStatement(queryLogin);
         pst.setString(1, storename);
         pst.setString(2, sellerid);
-        pst.setString(3, username); // Ensure the store belongs to the logged-in user
+        pst.setString(3, username);
 
         ResultSet rs = pst.executeQuery();
         if (rs.next()) {
             // Retrieve store details
             String Storename = rs.getString("Storename");
             String Name = rs.getString("Name");
-            String Location = rs.getString("Location"); // Get the location from the database
+            String Location = rs.getString("Location");
             int ID = rs.getInt("Sellerid");
             String Contacts = rs.getString("Contact");
 
             if (Storename != null && Name != null) {
-                // Pass the location to SellerPage
-                SellerPage seller = new SellerPage(storename, Name, Location, ID, Contacts);
+                // Create and show SellerPage
+                SellerPage seller = new SellerPage(storename, Username, Name, Location, ID, Contacts);
                 seller.setLocationRelativeTo(null);
                 seller.setVisible(true);
 
-                // Close the current frame
-                this.dispose();
+                // Dispose both frames
+                if (homepage != null) {
+                    homepage.dispose();  // Dispose the homepage
+                }
+                this.dispose();  // Dispose the current frame (SellerHopIn)
             } else {
                 JOptionPane.showMessageDialog(this, "Store name or seller details not found!");
             }
@@ -233,16 +240,18 @@ public class SellerHopIn extends javax.swing.JFrame {
     } catch (SQLException ex) {
         Logger.getLogger(Login.class.getName()).log(Level.SEVERE, null, ex);
         JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
-    }                
+    }        
     }//GEN-LAST:event_HopinActionPerformed
 
     private void RegisterMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_RegisterMouseClicked
         // TODO add your handling code here:
-         SellerRegistration register = new SellerRegistration(homepage, username);
+        
+         SellerRegistration register = new SellerRegistration(homepage, username, firstname, lastname);
     register.setVisible(true);
     register.pack();
     register.setLocationRelativeTo(null);
     this.dispose();
+  
     }//GEN-LAST:event_RegisterMouseClicked
 
     private void txtHopSelleridActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtHopSelleridActionPerformed
@@ -252,7 +261,7 @@ public class SellerHopIn extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public void main(String args[]) {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
@@ -280,7 +289,9 @@ public class SellerHopIn extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 String Username = null;
-                new SellerHopIn(homepage, Username).setVisible(true);
+                String Firstname = null;
+                String Lastname = null;
+                new SellerHopIn(homepage, Username, Firstname, Lastname).setVisible(true);
             }
         });
     }

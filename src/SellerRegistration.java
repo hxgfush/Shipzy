@@ -22,12 +22,16 @@ public class SellerRegistration extends javax.swing.JFrame {
         
         private String username;
         private Homepage homepage;
+        private String firstname;
+        private String lastname;
     /**
      * Creates new form SellerRegistration
      */
-    public SellerRegistration(Homepage Homepage, String Username) {
+    public SellerRegistration(Homepage Homepage, String Username, String Firstname, String Lastname) {
          this.username = Username;
          this.homepage = Homepage;
+         this.firstname = Firstname;
+         this.lastname = Lastname;
           initComponents();
         txtName.setText(username);
         try {
@@ -247,7 +251,9 @@ public class SellerRegistration extends javax.swing.JFrame {
 
             // TODO add your handling code here:
          String Username = username;
-        var sellerhop = new SellerHopIn(homepage, Username);
+         String Firstname = firstname;
+         String Lastname = lastname;
+        var sellerhop = new SellerHopIn(homepage, Username, Firstname, Lastname);
         sellerhop.setVisible(true);
         sellerhop.pack();
         sellerhop.setLocationRelativeTo(null);
@@ -364,7 +370,9 @@ public class SellerRegistration extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 String Username = null;
-                new SellerRegistration(homepage, Username).setVisible(true);
+                String Firstname = null;
+                String Lastname = null;
+                new SellerRegistration(homepage, Username, Firstname, Lastname).setVisible(true);
             }
         });
     }

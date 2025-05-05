@@ -21,6 +21,9 @@ import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import javax.swing.BoxLayout;
 import javax.swing.ImageIcon;
 import javax.swing.border.EmptyBorder;
@@ -36,6 +39,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JDialog;
+import javax.swing.JFileChooser;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -51,12 +55,14 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
     private String location;
     private int id;
     private String contacts;
+    private String username;
 
     /**
      * Creates new form SellerPage
      */
-    public SellerPage(String storename, String Name, String Location, int ID, String Contacts) {
+    public SellerPage(String storename, String Username, String Name, String Location, int ID, String Contacts) {
         initComponents();
+        this.username = Username;
          this.location = Location;
          this.storename = storename;
          this.id = ID;
@@ -407,44 +413,44 @@ public class ProductDAO {
         this.con = con;
     }
     
-    public List<Product> getProductsByStore(String storename) throws SQLException { 
-        List<Product> products = new ArrayList<>();
-        String query = "SELECT " +
-               "product_id, " +
-               "product_name, " +
-               "COALESCE(storename, 'Default Store') as storename, " +
-               "COALESCE(type, 'Unknown') as type, " + // Fetch the type field
-               "COALESCE(tagline, '') as tagline, " +
-               "price, " +
-               "COALESCE(original_price, price) as original_price, " +
-               "image1, " +
-               "image2, " +
-               "COALESCE(rating, 0.0) as rating, " +
-               "COALESCE(location, '') as location " +
-               "FROM products";
+   public List<Product> getProductsByStore(String storename) throws SQLException {
+    List<Product> products = new ArrayList<>();
+    String query = "SELECT " +
+           "product_id, " +
+           "product_name, " +
+           "COALESCE(storename, 'Default Store') as storename, " +
+           "COALESCE(type, 'Unknown') as type, " +
+           "COALESCE(tagline, '') as tagline, " +
+           "price, " +
+           "COALESCE(original_price, price) as original_price, " +
+           "image1, " +
+           "image2, " +
+           "COALESCE(rating, 0.0) as rating, " +
+           "COALESCE(location, '') as location " +
+           "FROM products WHERE storename = ?";  // Added WHERE clause with parameter
         
-        try (PreparedStatement stmt = con.prepareStatement(query)) {
-            stmt.setString(1, storename);
-            ResultSet rs = stmt.executeQuery();
+    try (PreparedStatement stmt = con.prepareStatement(query)) {
+        stmt.setString(1, storename);
+        ResultSet rs = stmt.executeQuery();
+        
+        while (rs.next()) {
+            int id = rs.getInt("product_id");
+            String name = rs.getString("product_name");
+            String store = rs.getString("storename");
+            String tagline = rs.getString("tagline");
+            double price = rs.getDouble("price");
+            double originalPrice = rs.getDouble("original_price");
+            byte[] image1 = rs.getBytes("image1");
+            byte[] image2 = rs.getBytes("image2");
+            double rating = rs.getDouble("rating");
+            String location = rs.getString("location");
+            String type = rs.getString("type");
             
-            while (rs.next()) {
-                int id = rs.getInt("product_id");
-                String name = rs.getString("product_name");
-                String store = rs.getString("storename");
-                String tagline = rs.getString("tagline");
-                double price = rs.getDouble("price");
-                double originalPrice = rs.getDouble("original_price");
-                byte[] image1 = rs.getBytes("image1");
-                byte[] image2 = rs.getBytes("image2");
-                double rating = rs.getDouble("rating");
-                String location = rs.getString("location");
-                String type = rs.getString("type");
-                
-                products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
-            }
+            products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
         }
-        return products;
     }
+    return products;
+}
 }
 
 private void displayProductCards() {
@@ -590,7 +596,7 @@ private JPanel createProductCard(Product product) {// This function used for cre
     leftPanel.add(Box.createRigidArea(new Dimension(0, 15)));
 
     // Price (left-aligned)
-    JLabel priceLabel = new JLabel(String.format("$ %.2f", product.getPrice()));
+    JLabel priceLabel = new JLabel(String.format("₱ %.2f", product.getPrice()));
     priceLabel.setFont(new Font("SansSerif", Font.BOLD, 16));
     priceLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     priceLabel.setForeground(Color.WHITE);
@@ -649,29 +655,91 @@ private JPanel createProductCard(Product product) {// This function used for cre
     return card;
 }
    
-private void editProduct(Product product, JPanel card, String originalName) {  //this is used for editing the data inside the card
+private void editProduct(Product product, JPanel card, String originalName) {
     // Create a dialog for editing
     JDialog editDialog = new JDialog(this, "Edit Product", true);
     editDialog.setLayout(new BorderLayout());
-    editDialog.setSize(400, 300);
+    editDialog.setSize(500, 500); // Increased size for image previews
     
     // Form panel
-    JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+    JPanel formPanel = new JPanel();
+    formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
     formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
     
     // Form fields
-    JTextField nameField = new JTextField(product.getProductName());
-    JTextField taglineField = new JTextField(product.getTagline());
-    JTextField priceField = new JTextField(String.valueOf(product.getPrice()));
+    JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    namePanel.add(new JLabel("Product Name:"));
+    JTextField nameField = new JTextField(product.getProductName(), 20);
+    namePanel.add(nameField);
     
-    formPanel.add(new JLabel("Product Name:"));
-    formPanel.add(nameField);
-    formPanel.add(new JLabel("Tagline:"));
-    formPanel.add(taglineField);
-    formPanel.add(new JLabel("Price:"));
-    formPanel.add(priceField);
+    JPanel taglinePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    taglinePanel.add(new JLabel("Tagline:"));
+    JTextField taglineField = new JTextField(product.getTagline(), 20);
+    taglinePanel.add(taglineField);
     
-    // Save button
+    JPanel pricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    pricePanel.add(new JLabel("Price:"));
+    JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 10);
+    pricePanel.add(priceField);
+    
+    // Image panels
+    JPanel image1Panel = new JPanel(new BorderLayout());
+    image1Panel.add(new JLabel("Image 1:"), BorderLayout.NORTH);
+    JLabel image1Label = new JLabel();
+    if (product.getImage1() != null && product.getImage1().length > 0) {
+        ImageIcon icon = new ImageIcon(product.getImage1());
+        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        image1Label.setIcon(new ImageIcon(img));
+    } else {
+        image1Label.setText("No Image");
+    }
+    JButton changeImage1Btn = new JButton("Change Image 1");
+    changeImage1Btn.addActionListener(e -> {
+        byte[] newImage = selectImage();
+        if (newImage != null) {
+            product.setImage1(newImage);
+            ImageIcon icon = new ImageIcon(newImage);
+            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            image1Label.setIcon(new ImageIcon(img));
+            image1Label.setText("");
+        }
+    });
+    image1Panel.add(image1Label, BorderLayout.CENTER);
+    image1Panel.add(changeImage1Btn, BorderLayout.SOUTH);
+    
+    JPanel image2Panel = new JPanel(new BorderLayout());
+    image2Panel.add(new JLabel("Image 2:"), BorderLayout.NORTH);
+    JLabel image2Label = new JLabel();
+    if (product.getImage2() != null && product.getImage2().length > 0) {
+        ImageIcon icon = new ImageIcon(product.getImage2());
+        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        image2Label.setIcon(new ImageIcon(img));
+    } else {
+        image2Label.setText("No Image");
+    }
+    JButton changeImage2Btn = new JButton("Change Image 2");
+    changeImage2Btn.addActionListener(e -> {
+        byte[] newImage = selectImage();
+        if (newImage != null) {
+            product.setImage2(newImage);
+            ImageIcon icon = new ImageIcon(newImage);
+            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            image2Label.setIcon(new ImageIcon(img));
+            image2Label.setText("");
+        }
+    });
+    image2Panel.add(image2Label, BorderLayout.CENTER);
+    image2Panel.add(changeImage2Btn, BorderLayout.SOUTH);
+    
+    // Add components to form panel
+    formPanel.add(namePanel);
+    formPanel.add(taglinePanel);
+    formPanel.add(pricePanel);
+    formPanel.add(image1Panel);
+    formPanel.add(image2Panel);
+    
+    // Button panel
+    JPanel buttonPanel = new JPanel();
     JButton saveButton = new JButton("Save Changes");
     saveButton.addActionListener(e -> {
         try {
@@ -680,8 +748,8 @@ private void editProduct(Product product, JPanel card, String originalName) {  /
             product.setTagline(taglineField.getText());
             product.setPrice(Double.parseDouble(priceField.getText()));
             
-            // Update database - now using product_id
-            updateProductInDatabase(product);  //call the function to innitiate update
+            // Update database with images
+            updateProductInDatabaseWithImages(product);
             
             // Refresh the card
             refreshCard(card, product);
@@ -692,12 +760,114 @@ private void editProduct(Product product, JPanel card, String originalName) {  /
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     });
-
+    
+    buttonPanel.add(saveButton);
     
     editDialog.add(formPanel, BorderLayout.CENTER);
-    editDialog.add(saveButton, BorderLayout.SOUTH);
+    editDialog.add(buttonPanel, BorderLayout.SOUTH);
     editDialog.setLocationRelativeTo(this);
     editDialog.setVisible(true);
+}
+
+private byte[] selectImage() {
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Select Product Image");
+    fileChooser.setAcceptAllFileFilterUsed(false);
+    fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+        public boolean accept(File f) {
+            if (f.isDirectory()) {
+                return true;
+            }
+            
+            String extension = getExtension(f);
+            if (extension != null) {
+                return extension.equalsIgnoreCase("jpg") || 
+                       extension.equalsIgnoreCase("jpeg") ||
+                       extension.equalsIgnoreCase("png") ||
+                       extension.equalsIgnoreCase("gif");
+            }
+            return false;
+        }
+        
+        public String getDescription() {
+            return "Image Files (*.jpg, *.jpeg, *.png, *.gif)";
+        }
+        
+        private String getExtension(File f) {
+            String ext = null;
+            String s = f.getName();
+            int i = s.lastIndexOf('.');
+            
+            if (i > 0 && i < s.length() - 1) {
+                ext = s.substring(i+1).toLowerCase();
+            }
+            return ext;
+        }
+    });
+    
+    int returnValue = fileChooser.showOpenDialog(this);
+    if (returnValue == JFileChooser.APPROVE_OPTION) {
+        File selectedFile = fileChooser.getSelectedFile();
+        try {
+            FileInputStream fis = new FileInputStream(selectedFile);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[1024];
+            
+            for (int readNum; (readNum = fis.read(buf)) != -1;) {
+                bos.write(buf, 0, readNum);
+            }
+            
+            return bos.toByteArray();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error loading image: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    return null;
+}
+
+private void updateProductInDatabaseWithImages(Product product) {
+    String query = "UPDATE products SET product_name=?, tagline=?, price=?, image1=?, image2=? WHERE product_id=?";
+    
+    try {
+        PreparedStatement param = con.prepareStatement(query);
+        param.setString(1, product.getProductName());
+        param.setString(2, product.getTagline());
+        param.setDouble(3, product.getPrice());
+        
+        // Set images (can be null)
+        if (product.getImage1() != null) {
+            param.setBytes(4, product.getImage1());
+        } else {
+            param.setNull(4, Types.BLOB);
+        }
+        
+        if (product.getImage2() != null) {
+            param.setBytes(5, product.getImage2());
+        } else {
+            param.setNull(5, Types.BLOB);
+        }
+        
+        param.setInt(6, product.getProductId());
+
+        int rowsAffected = param.executeUpdate();
+
+        if (rowsAffected == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "No product was updated. Product may not exist.", 
+                "Warning", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Product updated successfully!", 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
 }
 
 private void deleteProduct(Product product, JPanel card) {
@@ -740,46 +910,6 @@ private void deleteProduct(Product product, JPanel card) {
     }
 }
 
-private void updateProductInDatabase(Product product) {
-    // Corrected SQL query with proper syntax
-    String query = "UPDATE products SET product_name=?, tagline=?, price=?, original_price=? WHERE product_id=?";
-    
-    try 
-         {
-         PreparedStatement param = con.prepareStatement(query);
-        // Debug output
-        System.out.println("Updating product ID: " + product.getProductId());
-        System.out.println("New values: " + product.getProductName() + ", " + 
-                         product.getTagline() + ", " + product.getPrice());
-        
-        // Set parameters in correct order (1-based index)
-        param.setString(1, product.getProductName());
-        param.setString(2, product.getTagline());
-        param.setDouble(3, product.getPrice());
-        param.setDouble(4, product.getOriginalPrice());
-        param.setInt(5, product.getProductId());
-
-        int rowsAffected = param.executeUpdate();
-
-        if (rowsAffected == 0) {
-            System.out.println("No rows updated - product ID not found");
-            JOptionPane.showMessageDialog(this, 
-                "No product was updated. Product may not exist.", 
-                "Warning", JOptionPane.WARNING_MESSAGE);
-        } else {
-            System.out.println("Successfully updated product ID: " + product.getProductId());
-            JOptionPane.showMessageDialog(this, 
-                "Product updated successfully!", 
-                "Success", JOptionPane.INFORMATION_MESSAGE);
-        }
-    } catch (SQLException ex) {
-        System.err.println("SQL Error: " + ex.getMessage());
-        ex.printStackTrace();
-        JOptionPane.showMessageDialog(this, 
-            "Database error: " + ex.getMessage(), 
-            "Error", JOptionPane.ERROR_MESSAGE);
-    }
-}
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -1313,7 +1443,8 @@ private void updateProductInDatabase(Product product) {
         String firstname = null;
         String lastname = null;
         String Username = null;
-        var homepage = new Homepage(firstname, lastname, Username);
+        Homepage Homepage = null;
+        var homepage = new Homepage(Homepage, firstname, lastname, Username);
         homepage.setVisible(true);
         this.dispose();
 
@@ -1351,7 +1482,8 @@ private void updateProductInDatabase(Product product) {
                 String firstname = null;
                 String lastname = null;
                 String Username = null;
-                var homepage = new Homepage(firstname, lastname, Username);
+                Homepage Homepage = null;
+                var homepage = new Homepage(Homepage, firstname, lastname, Username);
                 homepage.setVisible(true);
                 this.dispose();
             } else {
@@ -1370,6 +1502,7 @@ private void updateProductInDatabase(Product product) {
     private void infoBTNconfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoBTNconfirmActionPerformed
 
          // Get the new values from text fields
+    // Get the new values from text fields
     String newStoreName = infoTXTstorename.getText().trim();
     String newContact = infoTXTcontact.getText().trim();
     
@@ -1380,12 +1513,12 @@ private void updateProductInDatabase(Product product) {
     }
     
     try {
-        // Update store information in database
+        // Update only storename and contact in database
         String query = "UPDATE sellermanager SET Storename = ?, Contact = ? WHERE Sellerid = ?";
         PreparedStatement stmt = con.prepareStatement(query);
         stmt.setString(1, newStoreName);
         stmt.setString(2, newContact);
-        stmt.setInt(3, id);
+        stmt.setInt(3, id);  // Use the existing ID as the WHERE condition
         
         int rowsAffected = stmt.executeUpdate();
         
@@ -1488,19 +1621,18 @@ private void updateProductInDatabase(Product product) {
 
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
-        String firstName = null;
-        String lastName = null;
-        String Username = null; 
-         int confirm = JOptionPane.showConfirmDialog(
-            SellerPage.this,
-            "Are you sure you want to LOG OUT?",
-            "Confirm LOG OUT",
-            JOptionPane.YES_NO_OPTION);
-         if (confirm == JOptionPane.YES_OPTION) {
-       Homepage home = new Homepage(firstName, lastName, Username);
-                home.setVisible(true);
-                this.dispose();
-         } 
+           int confirm = JOptionPane.showConfirmDialog(
+        SellerPage.this,
+        "Are you sure you want to LOG OUT?",
+        "Confirm LOG OUT",
+        JOptionPane.YES_NO_OPTION);
+     
+    if (confirm == JOptionPane.YES_OPTION) {
+        // Create new Homepage with stored user info
+        Homepage home = new Homepage(null, this.Name, "", this.username);
+        home.setVisible(true);
+        this.dispose();
+    } 
     }//GEN-LAST:event_jButton6ActionPerformed
 
     /**
@@ -1533,12 +1665,13 @@ private void updateProductInDatabase(Product product) {
         /* Create and display the form */
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
+                String Username = null;
                 String storename = null;
                 String Name = null;
                 String Location = null;
                 int ID = 0;
                 String Contacts = null;
-                new SellerPage(storename, Name, Location, ID, Contacts).setVisible(true);
+                new SellerPage(storename, Username, Name, Location, ID, Contacts).setVisible(true);
             }
         });
     }
