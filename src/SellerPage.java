@@ -7,6 +7,7 @@
  *
  * @author 63995
  */
+import newPackage.Feedback;
 import newPackage.Order;
 import newPackage.Product;
 import java.awt.BorderLayout;
@@ -16,7 +17,6 @@ import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.Image;
 import java.awt.Insets;
 import java.awt.event.WindowAdapter;
@@ -34,6 +34,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.util.logging.Logger;
 import java.sql.Connection;         /*This the import section which get the fumctoionality from the libraries */
+import java.text.SimpleDateFormat;
 import java.util.logging.Level;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -44,6 +45,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
 
@@ -105,25 +107,9 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
     }
     return con;
 }
-
-    private void refreshCard(JPanel card, Product product) {  //This block of code is used to refresh cards that display the product
-    // Remove all components from the card
-    card.removeAll();
-    
-    // Recreate the card with updated product
-    JPanel newCard = createProductCard(product);
-    
-    // Copy the new card's components to the old card
-    for (Component comp : newCard.getComponents()) {
-        card.add(comp);
-    }
-    
-    // Refresh the UI
-    card.revalidate();
-    card.repaint();
-}
   
- public class WrapLayout extends FlowLayout { //This block of code is used to arange the card
+//GRAPHICS
+public class WrapLayout extends FlowLayout { //This block of code is used to arange the card
     
     public WrapLayout() {
         super();
@@ -194,74 +180,296 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
     }
 }   
  
- 
-private JPanel createOrderCard(Order order) {
-    JPanel card = new JPanel();
-    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
-    card.setBorder(BorderFactory.createCompoundBorder(
-        BorderFactory.createLineBorder(new Color(200, 200, 200)),
-        BorderFactory.createEmptyBorder(15, 15, 15, 15)
-    ));
-    card.setBackground(new Color(69, 125, 88));
-    card.setPreferredSize(new Dimension(500, 200));
 
-    // Order ID
-    JLabel orderIdLabel = new JLabel("Order ID: " + order.getOrderId());
-    orderIdLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-    orderIdLabel.setForeground(Color.WHITE);
-
-    // Buyer's Username
-    JLabel buyerLabel = new JLabel("Buyer: " + order.getUsername());
-    buyerLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    buyerLabel.setForeground(Color.WHITE);
-
-    // Product Name
-    JLabel productNameLabel = new JLabel("Product: " + order.getProductName());
-    productNameLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    productNameLabel.setForeground(Color.WHITE);
-
-    // Quantity and Total Amount
-    JLabel qtyLabel = new JLabel("Quantity: " + order.getQuantity());
-    qtyLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    qtyLabel.setForeground(Color.WHITE);
-
-    JLabel totalLabel = new JLabel("Total Amount: ₱" + String.format("%.2f", order.getTotalAmount()));
-    totalLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
-    totalLabel.setForeground(Color.WHITE);
-
-    // Buttons Panel
-    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-    buttonPanel.setOpaque(false);
-
-    // Cancel Order Button
-    JButton cancelButton = new JButton("Cancel Order");
-    cancelButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    cancelButton.setBackground(new Color(200, 50, 50)); // Red color
-    cancelButton.setForeground(Color.WHITE);
-    cancelButton.setBorderPainted(false);
-    cancelButton.addActionListener(e -> cancelOrder(order, card)); // Call cancel logic
-    buttonPanel.add(cancelButton);
-
-    // Received Button
-    JButton receivedButton = new JButton("Received");
-    receivedButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
-    receivedButton.setBackground(new Color(50, 200, 50)); // Green color
-    receivedButton.setForeground(Color.WHITE);
-    receivedButton.setBorderPainted(false);
-    receivedButton.addActionListener(e -> markOrderAsReceived(order, card)); // Call received logic
-    buttonPanel.add(receivedButton);
-
-    // Add components to the card
-    card.add(orderIdLabel);
-    card.add(buyerLabel);
-    card.add(productNameLabel);
-    card.add(qtyLabel);
-    card.add(totalLabel);
-    card.add(buttonPanel); // Add the buttons panel at the bottom
-
-    return card;
+//METHODS
+private void editProduct(Product product, JPanel card, String originalName) {
+    // Create a dialog for editing
+    JDialog editDialog = new JDialog(this, "Edit Product", true);
+    editDialog.setLayout(new BorderLayout());
+    editDialog.setSize(500, 500); // Increased size for image previews
+    
+    // Form panel
+    JPanel formPanel = new JPanel();
+    formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
+    formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+    
+    // Form fields
+    JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    namePanel.add(new JLabel("Product Name:"));
+    JTextField nameField = new JTextField(product.getProductName(), 20);
+    namePanel.add(nameField);
+    
+    JPanel taglinePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    taglinePanel.add(new JLabel("Tagline:"));
+    JTextField taglineField = new JTextField(product.getTagline(), 20);
+    taglinePanel.add(taglineField);
+    
+    JPanel pricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    pricePanel.add(new JLabel("Price:"));
+    JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 10);
+    pricePanel.add(priceField);
+    
+    // Image panels
+    JPanel image1Panel = new JPanel(new BorderLayout());
+    image1Panel.add(new JLabel("Image 1:"), BorderLayout.NORTH);
+    JLabel image1Label = new JLabel();
+    if (product.getImage1() != null && product.getImage1().length > 0) {
+        ImageIcon icon = new ImageIcon(product.getImage1());
+        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        image1Label.setIcon(new ImageIcon(img));
+    } else {
+        image1Label.setText("No Image");
+    }
+    JButton changeImage1Btn = new JButton("Change Image 1");
+    changeImage1Btn.addActionListener(e -> {
+        byte[] newImage = selectImage();
+        if (newImage != null) {
+            product.setImage1(newImage);
+            ImageIcon icon = new ImageIcon(newImage);
+            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            image1Label.setIcon(new ImageIcon(img));
+            image1Label.setText("");
+        }
+    });
+    image1Panel.add(image1Label, BorderLayout.CENTER);
+    image1Panel.add(changeImage1Btn, BorderLayout.SOUTH);
+    
+    JPanel image2Panel = new JPanel(new BorderLayout());
+    image2Panel.add(new JLabel("Image 2:"), BorderLayout.NORTH);
+    JLabel image2Label = new JLabel();
+    if (product.getImage2() != null && product.getImage2().length > 0) {
+        ImageIcon icon = new ImageIcon(product.getImage2());
+        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+        image2Label.setIcon(new ImageIcon(img));
+    } else {
+        image2Label.setText("No Image");
+    }
+    JButton changeImage2Btn = new JButton("Change Image 2");
+    changeImage2Btn.addActionListener(e -> {
+        byte[] newImage = selectImage();
+        if (newImage != null) {
+            product.setImage2(newImage);
+            ImageIcon icon = new ImageIcon(newImage);
+            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
+            image2Label.setIcon(new ImageIcon(img));
+            image2Label.setText("");
+        }
+    });
+    image2Panel.add(image2Label, BorderLayout.CENTER);
+    image2Panel.add(changeImage2Btn, BorderLayout.SOUTH);
+    
+    // Add components to form panel
+    formPanel.add(namePanel);
+    formPanel.add(taglinePanel);
+    formPanel.add(pricePanel);
+    formPanel.add(image1Panel);
+    formPanel.add(image2Panel);
+    
+    // Button panel
+    JPanel buttonPanel = new JPanel();
+    JButton saveButton = new JButton("Save Changes");
+    saveButton.addActionListener(e -> {
+        try {
+            // Update the product object
+            product.setProductName(nameField.getText());
+            product.setTagline(taglineField.getText());
+            product.setPrice(Double.parseDouble(priceField.getText()));
+            
+            // Update database with images
+            updateProductInDatabaseWithImages(product);
+            
+            // Refresh the card
+            refreshCard(card, product);
+            
+            editDialog.dispose();
+        } catch (NumberFormatException ex) {
+            JOptionPane.showMessageDialog(this, "Please enter a valid price", 
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    });
+    
+    buttonPanel.add(saveButton);
+    
+    editDialog.add(formPanel, BorderLayout.CENTER);
+    editDialog.add(buttonPanel, BorderLayout.SOUTH);
+    editDialog.setLocationRelativeTo(this);
+    editDialog.setVisible(true);
 }
- private void markOrderAsReceived(Order order, JPanel card) {
+private byte[] selectImage() {
+    JFileChooser fileChooser = new JFileChooser();
+    fileChooser.setDialogTitle("Select Product Image");
+    fileChooser.setAcceptAllFileFilterUsed(false);
+    fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
+        public boolean accept(File f) {
+            if (f.isDirectory()) {
+                return true;
+            }
+            
+            String extension = getExtension(f);
+            if (extension != null) {
+                return extension.equalsIgnoreCase("jpg") || 
+                       extension.equalsIgnoreCase("jpeg") ||
+                       extension.equalsIgnoreCase("png") ||
+                       extension.equalsIgnoreCase("gif");
+            }
+            return false;
+        }
+        
+        public String getDescription() {
+            return "Image Files (*.jpg, *.jpeg, *.png, *.gif)";
+        }
+        
+        private String getExtension(File f) {
+            String ext = null;
+            String s = f.getName();
+            int i = s.lastIndexOf('.');
+            
+            if (i > 0 && i < s.length() - 1) {
+                ext = s.substring(i+1).toLowerCase();
+            }
+            return ext;
+        }
+    });
+    
+    int returnValue = fileChooser.showOpenDialog(this);
+    if (returnValue == JFileChooser.APPROVE_OPTION) {
+        File selectedFile = fileChooser.getSelectedFile();
+        try {
+            FileInputStream fis = new FileInputStream(selectedFile);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            byte[] buf = new byte[1024];
+            
+            for (int readNum; (readNum = fis.read(buf)) != -1;) {
+                bos.write(buf, 0, readNum);
+            }
+            
+            return bos.toByteArray();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Error loading image: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    return null;
+}
+private void updateProductInDatabaseWithImages(Product product) {
+    String query = "UPDATE products SET product_name=?, tagline=?, price=?, image1=?, image2=? WHERE product_id=?";
+    
+    try {
+        PreparedStatement param = con.prepareStatement(query);
+        param.setString(1, product.getProductName());
+        param.setString(2, product.getTagline());
+        param.setDouble(3, product.getPrice());
+        
+        // Set images (can be null)
+        if (product.getImage1() != null) {
+            param.setBytes(4, product.getImage1());
+        } else {
+            param.setNull(4, Types.BLOB);
+        }
+        
+        if (product.getImage2() != null) {
+            param.setBytes(5, product.getImage2());
+        } else {
+            param.setNull(5, Types.BLOB);
+        }
+        
+        param.setInt(6, product.getProductId());
+
+        int rowsAffected = param.executeUpdate();
+
+        if (rowsAffected == 0) {
+            JOptionPane.showMessageDialog(this, 
+                "No product was updated. Product may not exist.", 
+                "Warning", JOptionPane.WARNING_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "Product updated successfully!", 
+                "Success", JOptionPane.INFORMATION_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    }
+}
+private void deleteProduct(Product product, JPanel card) {
+    Connection conn = null;
+    PreparedStatement pstmt = null;
+    
+    try {
+        conn = getConnection();
+        String query = "DELETE FROM products WHERE product_id = ? AND storename = ?";
+        
+        pstmt = conn.prepareStatement(query);
+        pstmt.setInt(1, product.getProductId());
+        pstmt.setString(2, storename);
+        
+        int rowsAffected = pstmt.executeUpdate();
+        
+        if (rowsAffected > 0) {
+            // Remove from UI only if database delete succeeded
+            Container parent = card.getParent();
+            parent.remove(card);
+            parent.revalidate();
+            parent.repaint();
+            
+            JOptionPane.showMessageDialog(this, "Product deleted successfully");
+        } else {
+            JOptionPane.showMessageDialog(this, 
+                "No product was deleted. Either it doesn't exist or you don't have permission.", 
+                "Warning", JOptionPane.WARNING_MESSAGE);
+        }
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+        ex.printStackTrace();
+    } finally {
+        try {
+            if (pstmt != null) pstmt.close();
+        } catch (SQLException e) {
+        }
+    }
+}
+private void deleteOrder(Order order, JPanel card) {
+    int confirm = JOptionPane.showConfirmDialog(
+        this,
+        "Are you sure you want to delete this order record?",
+        "Confirm Deletion",
+        JOptionPane.YES_NO_OPTION
+    );
+
+    if (confirm == JOptionPane.YES_OPTION) {
+        try {
+            String query = "DELETE FROM orders WHERE order_id = ?";
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.setInt(1, order.getOrderId());
+
+            int rowsAffected = pst.executeUpdate();
+            if (rowsAffected > 0) {
+                // Remove the order card from the UI
+                Container parent = card.getParent();
+                parent.remove(card);
+                parent.revalidate();
+                parent.repaint();
+
+                JOptionPane.showMessageDialog(this, "Order deleted successfully.");
+            } else {
+                JOptionPane.showMessageDialog(this, 
+                    "Failed to delete the order. Please try again.", 
+                    "Error", JOptionPane.ERROR_MESSAGE);
+            }
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this, 
+                "Database error: " + ex.getMessage(),
+                "Error", JOptionPane.ERROR_MESSAGE);
+            ex.printStackTrace();
+        }
+    }
+}
+private void markOrderAsReceived(Order order, JPanel card) {
     try {
         String query = "UPDATE orders SET status = ? WHERE order_id = ?";
         PreparedStatement pst = con.prepareStatement(query);
@@ -287,7 +495,7 @@ private JPanel createOrderCard(Order order) {
         ex.printStackTrace();
     }
 }
- private void cancelOrder(Order order, JPanel card) {
+private void cancelOrder(Order order, JPanel card) {
     int confirm = JOptionPane.showConfirmDialog(
         this,
         "Are you sure you want to cancel this order?",
@@ -319,67 +527,50 @@ private JPanel createOrderCard(Order order) {
         }
     }
 }
- private void displayOrdersForStore() {
-    try {
-        orderTAB.removeAll();
-        orderTAB.addTab("Orders", new JLabel("Loading orders..."));
-
-        SwingWorker<Void, Void> worker = new SwingWorker<>() {
-            JPanel ordersPanel;
-
-            @Override
-            protected Void doInBackground() throws Exception {
-                Connection conn = getConnection();
-                List<Order> orders = getOrdersForStore(storename); // Fetch orders for this store
-
-                ordersPanel = new JPanel();
-                ordersPanel.setLayout(new BoxLayout(ordersPanel, BoxLayout.Y_AXIS));
-                ordersPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-                ordersPanel.setBackground(new Color(62, 93, 59));
-
-                if (orders.isEmpty()) {
-                    ordersPanel.add(new JLabel("No orders found for your store"));
-                } else {
-                    for (Order order : orders) {
-                        JPanel orderCard = createOrderCard(order);
-                        orderCard.setAlignmentX(Component.LEFT_ALIGNMENT);
-                        ordersPanel.add(orderCard);
-                        ordersPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-                    }
-                }
-                return null;
-            }
-
-            @Override
-            protected void done() {
-                try {
-                    get(); // Ensure background task completed successfully
-                    JScrollPane scrollPane = new JScrollPane(ordersPanel);
-                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-                    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
-                    scrollPane.setBackground(new Color(62, 93, 59));
-                    scrollPane.setBorder(null);
-
-                    orderTAB.removeAll();
-                    orderTAB.addTab("Store Orders", scrollPane);
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(SellerPage.this,
-                        "Error loading orders: " + ex.getMessage(),
-                        "Error", JOptionPane.ERROR_MESSAGE);
-                }
-            }
-        };
-        worker.execute();
-    } catch (Exception ex) {
-        ex.printStackTrace();
-        JOptionPane.showMessageDialog(this,
-            "Error initializing order display: " + ex.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
+private void refreshCard(JPanel card, Product product) {  //This block of code is used to refresh cards that display the product
+    // Remove all components from the card
+    card.removeAll();
+    
+    // Recreate the card with updated product
+    JPanel newCard = createProductCard(product);
+    
+    // Copy the new card's components to the old card
+    for (Component comp : newCard.getComponents()) {
+        card.add(comp);
     }
+    
+    // Refresh the UI
+    card.revalidate();
+    card.repaint();
 }
-  
+private List<Feedback> getStoreFeedbacks(String storename) throws SQLException {
+    List<Feedback> feedbacks = new ArrayList<>();
+    String query = "SELECT pr.username, pr.product_name, pr.rating, pr.review_message, pr.review_date, " +
+                  "p.storename " +
+                  "FROM product_ratings pr " +
+                  "JOIN products p ON pr.product_name = p.product_name " +
+                  "WHERE p.storename = ? " +
+                  "ORDER BY pr.review_date DESC";
+    
+    try (PreparedStatement pst = con.prepareStatement(query)) {
+        pst.setString(1, storename);
+        ResultSet rs = pst.executeQuery();
+        
+        while (rs.next()) {
+            String username = rs.getString("username");
+            String productName = rs.getString("product_name");
+            int rating = rs.getInt("rating");
+            String reviewMessage = rs.getString("review_message");
+            java.sql.Timestamp reviewDate = rs.getTimestamp("review_date"); // Explicitly use java.sql.Timestamp
+            String storeName = rs.getString("storename");
+            
+            feedbacks.add(new Feedback(username, productName, rating, reviewMessage, reviewDate, storeName));
+        }
+    }
+    return feedbacks;
+}
 
+//LOADER
 private List<Order> getOrdersForStore(String storename) throws SQLException {
     List<Order> orders = new ArrayList<>();
     String query = "SELECT order_id, username, product_name, store_name, price, quantity, total_amount, status " +
@@ -398,61 +589,14 @@ private List<Order> getOrdersForStore(String storename) throws SQLException {
             int quantity = rs.getInt("quantity");
             double totalAmount = rs.getDouble("total_amount");
             String status = rs.getString("status"); // Fetch status
-
             // Create an Order object and add it to the list
             orders.add(new Order(orderId, username, productName, storeName, price, quantity, totalAmount, status));
         }
     }
     return orders;
-}
-    
-public class ProductDAO {
-    private Connection con;
-    
-    public ProductDAO(Connection con) {
-        this.con = con;
-    }
-    
-   public List<Product> getProductsByStore(String storename) throws SQLException {
-    List<Product> products = new ArrayList<>();
-    String query = "SELECT " +
-           "product_id, " +
-           "product_name, " +
-           "COALESCE(storename, 'Default Store') as storename, " +
-           "COALESCE(type, 'Unknown') as type, " +
-           "COALESCE(tagline, '') as tagline, " +
-           "price, " +
-           "COALESCE(original_price, price) as original_price, " +
-           "image1, " +
-           "image2, " +
-           "COALESCE(rating, 0.0) as rating, " +
-           "COALESCE(location, '') as location " +
-           "FROM products WHERE storename = ?";  // Added WHERE clause with parameter
-        
-    try (PreparedStatement stmt = con.prepareStatement(query)) {
-        stmt.setString(1, storename);
-        ResultSet rs = stmt.executeQuery();
-        
-        while (rs.next()) {
-            int id = rs.getInt("product_id");
-            String name = rs.getString("product_name");
-            String store = rs.getString("storename");
-            String tagline = rs.getString("tagline");
-            double price = rs.getDouble("price");
-            double originalPrice = rs.getDouble("original_price");
-            byte[] image1 = rs.getBytes("image1");
-            byte[] image2 = rs.getBytes("image2");
-            double rating = rs.getDouble("rating");
-            String location = rs.getString("location");
-            String type = rs.getString("type");
-            
-            products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
-        }
-    }
-    return products;
-}
-}
+}  
 
+//DISPLAYER
 private void displayProductCards() {
     try {
         jTabbedPane2.removeAll();
@@ -513,7 +657,128 @@ private void displayProductCards() {
             "Error", JOptionPane.ERROR_MESSAGE);
     }
 }
+private void displayOrdersForStore() {
+    try {
+        orderTAB.removeAll();
+        orderTAB.addTab("Orders", new JLabel("Loading orders..."));
 
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            JPanel ordersPanel;
+
+            @Override
+            protected Void doInBackground() throws Exception {
+                Connection conn = getConnection();
+                List<Order> orders = getOrdersForStore(storename); // Fetch orders for this store
+
+                ordersPanel = new JPanel();
+                ordersPanel.setLayout(new BoxLayout(ordersPanel, BoxLayout.Y_AXIS));
+                ordersPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                ordersPanel.setBackground(new Color(62, 93, 59));
+
+                if (orders.isEmpty()) {
+                    ordersPanel.add(new JLabel("No orders found for your store"));
+                } else {
+                    for (Order order : orders) {
+                        JPanel orderCard = createOrderCard(order);
+                        orderCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        ordersPanel.add(orderCard);
+                        ordersPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    }
+                }
+                return null;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    get(); // Ensure background task completed successfully
+                    JScrollPane scrollPane = new JScrollPane(ordersPanel);
+                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                    scrollPane.setBackground(new Color(62, 93, 59));
+                    scrollPane.setBorder(null);
+
+                    orderTAB.removeAll();
+                    orderTAB.addTab("Store Orders", scrollPane);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(SellerPage.this,
+                        "Error loading orders: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error initializing order display: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+private void displayFeedbacks() {
+    try {
+        feedbackTAB.removeAll();
+        feedbackTAB.addTab("Feedbacks", new JLabel("Loading feedbacks..."));
+        
+        SwingWorker<Void, Void> worker = new SwingWorker<>() {
+            JPanel feedbackPanel;
+            
+            @Override
+            protected Void doInBackground() throws Exception {
+                Connection conn = getConnection();
+                List<Feedback> feedbacks = getStoreFeedbacks(storename);
+                
+                feedbackPanel = new JPanel();
+                feedbackPanel.setLayout(new BoxLayout(feedbackPanel, BoxLayout.Y_AXIS));
+                feedbackPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                feedbackPanel.setBackground(new Color(62, 93, 59));
+                
+                if (feedbacks.isEmpty()) {
+                    JLabel noFeedbackLabel = new JLabel("No feedbacks available for your store yet");
+                    noFeedbackLabel.setForeground(Color.WHITE);
+                    feedbackPanel.add(noFeedbackLabel);
+                } else {
+                    for (Feedback feedback : feedbacks) {
+                        JPanel feedbackCard = createFeedbackCard(feedback);
+                        feedbackCard.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        feedbackPanel.add(feedbackCard);
+                        feedbackPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    }
+                }
+                return null;
+            }
+            
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JScrollPane scrollPane = new JScrollPane(feedbackPanel);
+                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                    scrollPane.setBackground(new Color(62, 93, 59));
+                    scrollPane.setBorder(null);
+                    
+                    feedbackTAB.removeAll();
+                    feedbackTAB.addTab("Customer Feedbacks", scrollPane);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(SellerPage.this,
+                        "Error loading feedbacks: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this,
+            "Error initializing feedback display: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
+
+//CREATOR
 private JPanel createProductCard(Product product) {// This function used for creating the card 
     // Main card panel with horizontal BoxLayout
     JPanel card = new JPanel();
@@ -654,260 +919,201 @@ private JPanel createProductCard(Product product) {// This function used for cre
 
     return card;
 }
-   
-private void editProduct(Product product, JPanel card, String originalName) {
-    // Create a dialog for editing
-    JDialog editDialog = new JDialog(this, "Edit Product", true);
-    editDialog.setLayout(new BorderLayout());
-    editDialog.setSize(500, 500); // Increased size for image previews
-    
-    // Form panel
-    JPanel formPanel = new JPanel();
-    formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
-    formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-    
-    // Form fields
-    JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    namePanel.add(new JLabel("Product Name:"));
-    JTextField nameField = new JTextField(product.getProductName(), 20);
-    namePanel.add(nameField);
-    
-    JPanel taglinePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    taglinePanel.add(new JLabel("Tagline:"));
-    JTextField taglineField = new JTextField(product.getTagline(), 20);
-    taglinePanel.add(taglineField);
-    
-    JPanel pricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    pricePanel.add(new JLabel("Price:"));
-    JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 10);
-    pricePanel.add(priceField);
-    
-    // Image panels
-    JPanel image1Panel = new JPanel(new BorderLayout());
-    image1Panel.add(new JLabel("Image 1:"), BorderLayout.NORTH);
-    JLabel image1Label = new JLabel();
-    if (product.getImage1() != null && product.getImage1().length > 0) {
-        ImageIcon icon = new ImageIcon(product.getImage1());
-        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-        image1Label.setIcon(new ImageIcon(img));
+private JPanel createOrderCard(Order order) {
+    JPanel card = new JPanel();
+    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+    card.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+        BorderFactory.createEmptyBorder(15, 15, 15, 15)
+    ));
+    card.setBackground(new Color(69, 125, 88));
+    card.setPreferredSize(new Dimension(500, 200));
+
+    // Order ID
+    JLabel orderIdLabel = new JLabel("Order ID: " + order.getOrderId());
+    orderIdLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    orderIdLabel.setForeground(Color.WHITE);
+
+    // Buyer's Username
+    JLabel buyerLabel = new JLabel("Buyer: " + order.getUsername());
+    buyerLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    buyerLabel.setForeground(Color.WHITE);
+
+    // Product Name
+    JLabel productNameLabel = new JLabel("Product: " + order.getProductName());
+    productNameLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    productNameLabel.setForeground(Color.WHITE);
+
+    // Quantity and Total Amount
+    JLabel qtyLabel = new JLabel("Quantity: " + order.getQuantity());
+    qtyLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    qtyLabel.setForeground(Color.WHITE);
+
+    JLabel totalLabel = new JLabel("Total Amount: ₱" + String.format("%.2f", order.getTotalAmount()));
+    totalLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    totalLabel.setForeground(Color.WHITE);
+
+    // Status label
+    JLabel statusLabel = new JLabel("Status: " + order.getStatus());
+    statusLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+    statusLabel.setForeground(order.getStatus().equalsIgnoreCase("received") ? Color.GREEN : Color.YELLOW);
+
+    // Buttons Panel
+    JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+    buttonPanel.setOpaque(false);
+
+    if (order.getStatus().equalsIgnoreCase("received")) {
+        // For received orders - only show Delete button
+        JButton deleteButton = new JButton("Delete");
+        deleteButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        deleteButton.setBackground(new Color(200, 50, 50)); // Red color
+        deleteButton.setForeground(Color.WHITE);
+        deleteButton.setBorderPainted(false);
+        deleteButton.addActionListener(e -> deleteOrder(order, card));
+        buttonPanel.add(deleteButton);
     } else {
-        image1Label.setText("No Image");
+        // For pending orders - show Cancel and Received buttons
+        JButton cancelButton = new JButton("Cancel Order");
+        cancelButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        cancelButton.setBackground(new Color(200, 50, 50)); // Red color
+        cancelButton.setForeground(Color.WHITE);
+        cancelButton.setBorderPainted(false);
+        cancelButton.addActionListener(e -> cancelOrder(order, card));
+        buttonPanel.add(cancelButton);
+
+        JButton receivedButton = new JButton("Received");
+        receivedButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        receivedButton.setBackground(new Color(50, 200, 50)); // Green color
+        receivedButton.setForeground(Color.WHITE);
+        receivedButton.setBorderPainted(false);
+        receivedButton.addActionListener(e -> markOrderAsReceived(order, card));
+        buttonPanel.add(receivedButton);
     }
-    JButton changeImage1Btn = new JButton("Change Image 1");
-    changeImage1Btn.addActionListener(e -> {
-        byte[] newImage = selectImage();
-        if (newImage != null) {
-            product.setImage1(newImage);
-            ImageIcon icon = new ImageIcon(newImage);
-            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-            image1Label.setIcon(new ImageIcon(img));
-            image1Label.setText("");
-        }
-    });
-    image1Panel.add(image1Label, BorderLayout.CENTER);
-    image1Panel.add(changeImage1Btn, BorderLayout.SOUTH);
-    
-    JPanel image2Panel = new JPanel(new BorderLayout());
-    image2Panel.add(new JLabel("Image 2:"), BorderLayout.NORTH);
-    JLabel image2Label = new JLabel();
-    if (product.getImage2() != null && product.getImage2().length > 0) {
-        ImageIcon icon = new ImageIcon(product.getImage2());
-        Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-        image2Label.setIcon(new ImageIcon(img));
-    } else {
-        image2Label.setText("No Image");
-    }
-    JButton changeImage2Btn = new JButton("Change Image 2");
-    changeImage2Btn.addActionListener(e -> {
-        byte[] newImage = selectImage();
-        if (newImage != null) {
-            product.setImage2(newImage);
-            ImageIcon icon = new ImageIcon(newImage);
-            Image img = icon.getImage().getScaledInstance(150, 150, Image.SCALE_SMOOTH);
-            image2Label.setIcon(new ImageIcon(img));
-            image2Label.setText("");
-        }
-    });
-    image2Panel.add(image2Label, BorderLayout.CENTER);
-    image2Panel.add(changeImage2Btn, BorderLayout.SOUTH);
-    
-    // Add components to form panel
-    formPanel.add(namePanel);
-    formPanel.add(taglinePanel);
-    formPanel.add(pricePanel);
-    formPanel.add(image1Panel);
-    formPanel.add(image2Panel);
-    
-    // Button panel
-    JPanel buttonPanel = new JPanel();
-    JButton saveButton = new JButton("Save Changes");
-    saveButton.addActionListener(e -> {
-        try {
-            // Update the product object
-            product.setProductName(nameField.getText());
-            product.setTagline(taglineField.getText());
-            product.setPrice(Double.parseDouble(priceField.getText()));
-            
-            // Update database with images
-            updateProductInDatabaseWithImages(product);
-            
-            // Refresh the card
-            refreshCard(card, product);
-            
-            editDialog.dispose();
-        } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid price", 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
-    });
-    
-    buttonPanel.add(saveButton);
-    
-    editDialog.add(formPanel, BorderLayout.CENTER);
-    editDialog.add(buttonPanel, BorderLayout.SOUTH);
-    editDialog.setLocationRelativeTo(this);
-    editDialog.setVisible(true);
+
+    // Add components to the card
+    card.add(orderIdLabel);
+    card.add(buyerLabel);
+    card.add(productNameLabel);
+    card.add(qtyLabel);
+    card.add(totalLabel);
+    card.add(statusLabel);
+    card.add(buttonPanel);
+
+    return card;
 }
-
-private byte[] selectImage() {
-    JFileChooser fileChooser = new JFileChooser();
-    fileChooser.setDialogTitle("Select Product Image");
-    fileChooser.setAcceptAllFileFilterUsed(false);
-    fileChooser.addChoosableFileFilter(new javax.swing.filechooser.FileFilter() {
-        public boolean accept(File f) {
-            if (f.isDirectory()) {
-                return true;
-            }
-            
-            String extension = getExtension(f);
-            if (extension != null) {
-                return extension.equalsIgnoreCase("jpg") || 
-                       extension.equalsIgnoreCase("jpeg") ||
-                       extension.equalsIgnoreCase("png") ||
-                       extension.equalsIgnoreCase("gif");
-            }
-            return false;
-        }
-        
-        public String getDescription() {
-            return "Image Files (*.jpg, *.jpeg, *.png, *.gif)";
-        }
-        
-        private String getExtension(File f) {
-            String ext = null;
-            String s = f.getName();
-            int i = s.lastIndexOf('.');
-            
-            if (i > 0 && i < s.length() - 1) {
-                ext = s.substring(i+1).toLowerCase();
-            }
-            return ext;
-        }
-    });
+public class ProductDAO {
+    private Connection con;
     
-    int returnValue = fileChooser.showOpenDialog(this);
-    if (returnValue == JFileChooser.APPROVE_OPTION) {
-        File selectedFile = fileChooser.getSelectedFile();
-        try {
-            FileInputStream fis = new FileInputStream(selectedFile);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            byte[] buf = new byte[1024];
+    public ProductDAO(Connection con) {
+        this.con = con;
+    }
+    
+   public List<Product> getProductsByStore(String storename) throws SQLException {
+    List<Product> products = new ArrayList<>();
+    String query = "SELECT " +
+           "product_id, " +
+           "product_name, " +
+           "COALESCE(storename, 'Default Store') as storename, " +
+           "COALESCE(type, 'Unknown') as type, " +
+           "COALESCE(tagline, '') as tagline, " +
+           "price, " +
+           "COALESCE(original_price, price) as original_price, " +
+           "image1, " +
+           "image2, " +
+           "COALESCE(rating, 0.0) as rating, " +
+           "COALESCE(location, '') as location " +
+           "FROM products WHERE storename = ?";  // Added WHERE clause with parameter
+        
+    try (PreparedStatement stmt = con.prepareStatement(query)) {
+        stmt.setString(1, storename);
+        ResultSet rs = stmt.executeQuery();
+        
+        while (rs.next()) {
+            int id = rs.getInt("product_id");
+            String name = rs.getString("product_name");
+            String store = rs.getString("storename");
+            String tagline = rs.getString("tagline");
+            double price = rs.getDouble("price");
+            double originalPrice = rs.getDouble("original_price");
+            byte[] image1 = rs.getBytes("image1");
+            byte[] image2 = rs.getBytes("image2");
+            double rating = rs.getDouble("rating");
+            String location = rs.getString("location");
+            String type = rs.getString("type");
             
-            for (int readNum; (readNum = fis.read(buf)) != -1;) {
-                bos.write(buf, 0, readNum);
-            }
-            
-            return bos.toByteArray();
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(this, 
-                "Error loading image: " + ex.getMessage(),
-                "Error", JOptionPane.ERROR_MESSAGE);
+            products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
         }
     }
-    return null;
+    return products;
 }
-
-private void updateProductInDatabaseWithImages(Product product) {
-    String query = "UPDATE products SET product_name=?, tagline=?, price=?, image1=?, image2=? WHERE product_id=?";
-    
-    try {
-        PreparedStatement param = con.prepareStatement(query);
-        param.setString(1, product.getProductName());
-        param.setString(2, product.getTagline());
-        param.setDouble(3, product.getPrice());
-        
-        // Set images (can be null)
-        if (product.getImage1() != null) {
-            param.setBytes(4, product.getImage1());
-        } else {
-            param.setNull(4, Types.BLOB);
-        }
-        
-        if (product.getImage2() != null) {
-            param.setBytes(5, product.getImage2());
-        } else {
-            param.setNull(5, Types.BLOB);
-        }
-        
-        param.setInt(6, product.getProductId());
-
-        int rowsAffected = param.executeUpdate();
-
-        if (rowsAffected == 0) {
-            JOptionPane.showMessageDialog(this, 
-                "No product was updated. Product may not exist.", 
-                "Warning", JOptionPane.WARNING_MESSAGE);
-        } else {
-            JOptionPane.showMessageDialog(this, 
-                "Product updated successfully!", 
-                "Success", JOptionPane.INFORMATION_MESSAGE);
-        }
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Database error: " + ex.getMessage(), 
-            "Error", JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    }
 }
-
-private void deleteProduct(Product product, JPanel card) {
-    Connection conn = null;
-    PreparedStatement pstmt = null;
+private JPanel createFeedbackCard(Feedback feedback) {
+    JPanel card = new JPanel();
+    card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
+    card.setBorder(BorderFactory.createCompoundBorder(
+        BorderFactory.createLineBorder(new Color(200, 200, 200)),
+        BorderFactory.createEmptyBorder(15, 15, 15, 15)
+    ));
+    card.setBackground(new Color(69, 125, 88));
+    card.setPreferredSize(new Dimension(700, 150));
     
-    try {
-        conn = getConnection();
-        String query = "DELETE FROM products WHERE product_id = ? AND storename = ?";
-        
-        pstmt = conn.prepareStatement(query);
-        pstmt.setInt(1, product.getProductId());
-        pstmt.setString(2, storename);
-        
-        int rowsAffected = pstmt.executeUpdate();
-        
-        if (rowsAffected > 0) {
-            // Remove from UI only if database delete succeeded
-            Container parent = card.getParent();
-            parent.remove(card);
-            parent.revalidate();
-            parent.repaint();
-            
-            JOptionPane.showMessageDialog(this, "Product deleted successfully");
+    // Buyer info
+    JLabel buyerLabel = new JLabel("Buyer: " + feedback.getUsername());
+    buyerLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+    buyerLabel.setForeground(Color.WHITE);
+    
+    // Product info
+    JLabel productLabel = new JLabel("Product: " + feedback.getProductName());
+    productLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
+    productLabel.setForeground(Color.WHITE);
+    
+    // Rating stars - using text stars if images not found
+    JPanel ratingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    ratingPanel.setOpaque(false);
+    JLabel ratingLabel = new JLabel("Rating: ");
+    ratingLabel.setForeground(Color.WHITE);
+    ratingPanel.add(ratingLabel);
+    
+    // Add stars based on rating
+    for (int i = 0; i < 5; i++) {
+        JLabel star = new JLabel();
+        if (i < feedback.getRating()) {
+            star.setText("★"); // Filled star character
         } else {
-            JOptionPane.showMessageDialog(this, 
-                "No product was deleted. Either it doesn't exist or you don't have permission.", 
-                "Warning", JOptionPane.WARNING_MESSAGE);
+            star.setText("☆"); // Empty star character
         }
-    } catch (SQLException ex) {
-        JOptionPane.showMessageDialog(this, 
-            "Database error: " + ex.getMessage(),
-            "Error", JOptionPane.ERROR_MESSAGE);
-        ex.printStackTrace();
-    } finally {
-        try {
-            if (pstmt != null) pstmt.close();
-        } catch (SQLException e) {
-        }
+        star.setForeground(Color.YELLOW);
+        star.setFont(new Font("SansSerif", Font.PLAIN, 16));
+        ratingPanel.add(star);
     }
+    
+    // Review message
+    JTextArea reviewArea = new JTextArea(feedback.getReviewMessage());
+    reviewArea.setLineWrap(true);
+    reviewArea.setWrapStyleWord(true);
+    reviewArea.setEditable(false);
+    reviewArea.setBackground(new Color(69, 125, 88));
+    reviewArea.setForeground(Color.WHITE);
+    reviewArea.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+    
+    // Date formatting
+    SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, yyyy hh:mm a");
+    String formattedDate = dateFormat.format(new Date(feedback.getReviewDate().getTime()));
+    JLabel dateLabel = new JLabel("Posted on: " + formattedDate);
+    dateLabel.setFont(new Font("SansSerif", Font.ITALIC, 10));
+    dateLabel.setForeground(Color.LIGHT_GRAY);
+    dateLabel.setAlignmentX(Component.RIGHT_ALIGNMENT);
+    
+    // Add components to card
+    card.add(buyerLabel);
+    card.add(productLabel);
+    card.add(ratingPanel);
+    card.add(Box.createRigidArea(new Dimension(0, 5)));
+    card.add(new JScrollPane(reviewArea));
+    card.add(Box.createRigidArea(new Dimension(0, 5)));
+    card.add(dateLabel);
+    
+    return card;
 }
 
 
@@ -938,6 +1144,9 @@ private void deleteProduct(Product product, JPanel card) {
         jPanel4 = new javax.swing.JPanel();
         jLabel1 = new javax.swing.JLabel();
         jTabbedPane2 = new javax.swing.JTabbedPane();
+        searchTXT = new javax.swing.JTextField();
+        searchButton = new javax.swing.JButton();
+        searchBTN = new javax.swing.JButton();
         Order = new javax.swing.JPanel();
         orderTAB = new javax.swing.JTabbedPane();
         jLabel11 = new javax.swing.JLabel();
@@ -960,6 +1169,9 @@ private void deleteProduct(Product product, JPanel card) {
         jLabel10 = new javax.swing.JLabel();
         infoBTNconfirm = new javax.swing.JButton();
         jToggleButton1 = new javax.swing.JToggleButton();
+        Feedbacks = new javax.swing.JPanel();
+        jLabel12 = new javax.swing.JLabel();
+        feedbackTAB = new javax.swing.JTabbedPane();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -995,7 +1207,7 @@ private void deleteProduct(Product product, JPanel card) {
 
         jPanel2.setBackground(new java.awt.Color(52, 70, 49));
 
-        jButton6.setBackground(new java.awt.Color(69, 125, 88));
+        jButton6.setBackground(new java.awt.Color(53, 91, 66));
         jButton6.setForeground(new java.awt.Color(255, 255, 255));
         jButton6.setText("LOG OUT");
         jButton6.addActionListener(new java.awt.event.ActionListener() {
@@ -1004,7 +1216,7 @@ private void deleteProduct(Product product, JPanel card) {
             }
         });
 
-        btnInfo.setBackground(new java.awt.Color(69, 125, 88));
+        btnInfo.setBackground(new java.awt.Color(53, 91, 66));
         btnInfo.setForeground(new java.awt.Color(255, 255, 255));
         btnInfo.setText("Store Info");
         btnInfo.addActionListener(new java.awt.event.ActionListener() {
@@ -1013,7 +1225,7 @@ private void deleteProduct(Product product, JPanel card) {
             }
         });
 
-        btnFeedback.setBackground(new java.awt.Color(69, 125, 88));
+        btnFeedback.setBackground(new java.awt.Color(53, 91, 66));
         btnFeedback.setForeground(new java.awt.Color(255, 255, 255));
         btnFeedback.setText("Feed backs");
         btnFeedback.addActionListener(new java.awt.event.ActionListener() {
@@ -1022,7 +1234,7 @@ private void deleteProduct(Product product, JPanel card) {
             }
         });
 
-        btnOrder.setBackground(new java.awt.Color(69, 125, 88));
+        btnOrder.setBackground(new java.awt.Color(53, 91, 66));
         btnOrder.setForeground(new java.awt.Color(255, 255, 255));
         btnOrder.setText("Order");
         btnOrder.addActionListener(new java.awt.event.ActionListener() {
@@ -1031,7 +1243,7 @@ private void deleteProduct(Product product, JPanel card) {
             }
         });
 
-        btnProducts.setBackground(new java.awt.Color(69, 125, 88));
+        btnProducts.setBackground(new java.awt.Color(53, 91, 66));
         btnProducts.setForeground(new java.awt.Color(255, 255, 255));
         btnProducts.setText("My Product");
         btnProducts.addActionListener(new java.awt.event.ActionListener() {
@@ -1085,7 +1297,7 @@ private void deleteProduct(Product product, JPanel card) {
         owberLabel.setForeground(new java.awt.Color(255, 255, 255));
         owberLabel.setText("Owner Name");
 
-        jButton1.setBackground(new java.awt.Color(69, 125, 88));
+        jButton1.setBackground(new java.awt.Color(53, 91, 66));
         jButton1.setFont(new java.awt.Font("Inknut Antiqua", 0, 10)); // NOI18N
         jButton1.setForeground(new java.awt.Color(255, 255, 255));
         jButton1.setText("Add Product");
@@ -1130,12 +1342,22 @@ private void deleteProduct(Product product, JPanel card) {
                 .addContainerGap(14, Short.MAX_VALUE))
         );
 
+        searchTXT.setBackground(new java.awt.Color(255, 255, 255));
+        searchTXT.setForeground(new java.awt.Color(0, 0, 0));
+
+        searchButton.setBackground(new java.awt.Color(255, 255, 255));
+        searchButton.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/search.png"))); // NOI18N
+
+        searchBTN.setBackground(new java.awt.Color(255, 255, 255));
+        searchBTN.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Assets/search.png"))); // NOI18N
+
         javax.swing.GroupLayout MyproductsLayout = new javax.swing.GroupLayout(Myproducts);
         Myproducts.setLayout(MyproductsLayout);
         MyproductsLayout.setHorizontalGroup(
             MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(MyproductsLayout.createSequentialGroup()
                 .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(MyproductsLayout.createSequentialGroup()
                         .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel3)
@@ -1145,10 +1367,18 @@ private void deleteProduct(Product product, JPanel card) {
                                 .addComponent(owberLabel))
                             .addGroup(MyproductsLayout.createSequentialGroup()
                                 .addContainerGap()
-                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 623, Short.MAX_VALUE))
-                    .addComponent(jPanel4, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(24, 24, 24)
+                                .addComponent(searchTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(searchBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addGap(0, 374, Short.MAX_VALUE)))
                 .addContainerGap())
+            .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(MyproductsLayout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(searchButton)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
         MyproductsLayout.setVerticalGroup(
             MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -1158,11 +1388,19 @@ private void deleteProduct(Product product, JPanel card) {
                 .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(owberLabel)
                     .addComponent(jLabel5))
-                .addGap(36, 36, 36)
-                .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35)
+                .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(searchBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(647, Short.MAX_VALUE))
+                .addContainerGap(649, Short.MAX_VALUE))
+            .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGroup(MyproductsLayout.createSequentialGroup()
+                    .addGap(0, 0, Short.MAX_VALUE)
+                    .addComponent(searchButton)
+                    .addGap(0, 0, Short.MAX_VALUE)))
         );
 
         parent.add(Myproducts, "card2");
@@ -1190,14 +1428,14 @@ private void deleteProduct(Product product, JPanel card) {
                 .addComponent(jLabel11)
                 .addGap(18, 18, 18)
                 .addComponent(orderTAB, javax.swing.GroupLayout.PREFERRED_SIZE, 509, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(640, Short.MAX_VALUE))
+                .addContainerGap(641, Short.MAX_VALUE))
         );
 
         parent.add(Order, "card3");
 
         Info.setBackground(new java.awt.Color(62, 93, 59));
 
-        jLabel2.setFont(new java.awt.Font("Segoe UI", 0, 24)); // NOI18N
+        jLabel2.setFont(new java.awt.Font("Irish Grover", 0, 24)); // NOI18N
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("STORE INFO");
 
@@ -1301,7 +1539,7 @@ private void deleteProduct(Product product, JPanel card) {
         jLabel10.setForeground(new java.awt.Color(255, 255, 255));
         jLabel10.setText("Contact: ");
 
-        infoBTNconfirm.setBackground(new java.awt.Color(69, 125, 88));
+        infoBTNconfirm.setBackground(new java.awt.Color(53, 91, 66));
         infoBTNconfirm.setForeground(new java.awt.Color(255, 255, 255));
         infoBTNconfirm.setText("CONFIRM");
         infoBTNconfirm.addActionListener(new java.awt.event.ActionListener() {
@@ -1344,7 +1582,7 @@ private void deleteProduct(Product product, JPanel card) {
                 .addGap(16, 16, 16))
         );
 
-        jToggleButton1.setBackground(new java.awt.Color(69, 125, 88));
+        jToggleButton1.setBackground(new java.awt.Color(53, 91, 66));
         jToggleButton1.setForeground(new java.awt.Color(255, 255, 255));
         jToggleButton1.setText("EDIT INFO");
         jToggleButton1.addActionListener(new java.awt.event.ActionListener() {
@@ -1382,10 +1620,41 @@ private void deleteProduct(Product product, JPanel card) {
                     .addComponent(jToggleButton1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(editPanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(759, Short.MAX_VALUE))
+                .addContainerGap(762, Short.MAX_VALUE))
         );
 
         parent.add(Info, "card4");
+
+        Feedbacks.setBackground(new java.awt.Color(42, 58, 41));
+        Feedbacks.setForeground(new java.awt.Color(255, 255, 255));
+
+        jLabel12.setFont(new java.awt.Font("Irish Grover", 0, 24)); // NOI18N
+        jLabel12.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel12.setText("Feedbacks:");
+
+        javax.swing.GroupLayout FeedbacksLayout = new javax.swing.GroupLayout(Feedbacks);
+        Feedbacks.setLayout(FeedbacksLayout);
+        FeedbacksLayout.setHorizontalGroup(
+            FeedbacksLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(FeedbacksLayout.createSequentialGroup()
+                .addComponent(jLabel12)
+                .addGap(0, 0, Short.MAX_VALUE))
+            .addGroup(FeedbacksLayout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(feedbackTAB, javax.swing.GroupLayout.PREFERRED_SIZE, 792, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(24, Short.MAX_VALUE))
+        );
+        FeedbacksLayout.setVerticalGroup(
+            FeedbacksLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(FeedbacksLayout.createSequentialGroup()
+                .addGap(32, 32, 32)
+                .addComponent(jLabel12)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(feedbackTAB, javax.swing.GroupLayout.PREFERRED_SIZE, 489, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(670, Short.MAX_VALUE))
+        );
+
+        parent.add(Feedbacks, "card5");
 
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
@@ -1423,6 +1692,8 @@ private void deleteProduct(Product product, JPanel card) {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
+    
+    //ACTION BUTTONS
     private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
         // This action  or functions enables the user to insert a product
         var product = new AddProduct(storename, location);
@@ -1437,7 +1708,6 @@ private void deleteProduct(Product product, JPanel card) {
             }
         });
     }//GEN-LAST:event_jButton1ActionPerformed
-
     private void jLabel6MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel6MouseClicked
         // TODO add your handling code here:
         String firstname = null;
@@ -1449,7 +1719,6 @@ private void deleteProduct(Product product, JPanel card) {
         this.dispose();
 
     }//GEN-LAST:event_jLabel6MouseClicked
-
     private void infoBTNdeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoBTNdeleteActionPerformed
         // TODO add your handling code here:
         // Confirm deletion
@@ -1497,8 +1766,6 @@ private void deleteProduct(Product product, JPanel card) {
         }
     }
     }//GEN-LAST:event_infoBTNdeleteActionPerformed
-
-    //INFORMATIONS
     private void infoBTNconfirmActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoBTNconfirmActionPerformed
 
          // Get the new values from text fields
@@ -1549,8 +1816,7 @@ private void deleteProduct(Product product, JPanel card) {
         JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         ex.printStackTrace();
     }
-}                                                                                   
-    private void updateProductsStoreName(String oldStoreName, String newStoreName) {
+}                                                                                       private void updateProductsStoreName(String oldStoreName, String newStoreName) {
     try {
         // First update the products in the database
         String query = "UPDATE products SET storename = ? WHERE storename = ?";
@@ -1579,7 +1845,6 @@ private void deleteProduct(Product product, JPanel card) {
     }
         
     }//GEN-LAST:event_infoBTNconfirmActionPerformed
-
     private void jToggleButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jToggleButton1ActionPerformed
         // TODO add your handling code here:
         if (jToggleButton1.isSelected()) {
@@ -1588,11 +1853,14 @@ private void deleteProduct(Product product, JPanel card) {
         editPanel.setVisible(false);
     }
     }//GEN-LAST:event_jToggleButton1ActionPerformed
-
     private void btnFeedbackActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnFeedbackActionPerformed
         // TODO add your handling code here:
+         parent.removeAll();
+    parent.add(Feedbacks);
+    parent.repaint();
+    parent.revalidate();
+    displayFeedbacks();
     }//GEN-LAST:event_btnFeedbackActionPerformed
-
     private void btnInfoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnInfoActionPerformed
         // TODO add your handling code here:
         
@@ -1601,7 +1869,6 @@ private void deleteProduct(Product product, JPanel card) {
         parent.repaint();
         parent.revalidate();
     }//GEN-LAST:event_btnInfoActionPerformed
-
     private void btnOrderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnOrderActionPerformed
         // TODO add your handling code here:
               parent.removeAll();
@@ -1610,7 +1877,6 @@ private void deleteProduct(Product product, JPanel card) {
         parent.revalidate();
          displayOrdersForStore();
     }//GEN-LAST:event_btnOrderActionPerformed
-
     private void btnProductsActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnProductsActionPerformed
         // TODO add your handling code here:
          parent.removeAll();
@@ -1618,7 +1884,6 @@ private void deleteProduct(Product product, JPanel card) {
         parent.repaint();
         parent.revalidate();
     }//GEN-LAST:event_btnProductsActionPerformed
-
     private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
         // TODO add your handling code here:
            int confirm = JOptionPane.showConfirmDialog(
@@ -1677,6 +1942,7 @@ private void deleteProduct(Product product, JPanel card) {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JPanel Feedbacks;
     private javax.swing.JPanel Info;
     private javax.swing.JPanel Myproducts;
     private javax.swing.JPanel Order;
@@ -1685,6 +1951,7 @@ private void deleteProduct(Product product, JPanel card) {
     private javax.swing.JButton btnOrder;
     private javax.swing.JButton btnProducts;
     private javax.swing.JPanel editPanel;
+    private javax.swing.JTabbedPane feedbackTAB;
     private javax.swing.JButton infoBTNconfirm;
     private javax.swing.JButton infoBTNdelete;
     private javax.swing.JLabel infoContacts;
@@ -1698,6 +1965,7 @@ private void deleteProduct(Product product, JPanel card) {
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
+    private javax.swing.JLabel jLabel12;
     private javax.swing.JLabel jLabel13;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
@@ -1717,5 +1985,8 @@ private void deleteProduct(Product product, JPanel card) {
     private javax.swing.JTabbedPane orderTAB;
     private javax.swing.JLabel owberLabel;
     private javax.swing.JPanel parent;
+    private javax.swing.JButton searchBTN;
+    private javax.swing.JButton searchButton;
+    private javax.swing.JTextField searchTXT;
     // End of variables declaration//GEN-END:variables
 }

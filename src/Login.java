@@ -117,17 +117,14 @@ public class Login extends javax.swing.JFrame {
     });
 }       
      
-     private void showPasswordChangeDialog(String username) {
+    private void showPasswordResetDialog(String username) {
     // Create the JDialog
-    JDialog dialog = new JDialog(this, "Change Password", true);
-    dialog.setSize(300, 250);
+    JDialog dialog = new JDialog(this, "Reset Password", true);
+    dialog.setSize(300, 200);
     dialog.setLocationRelativeTo(this);
-    dialog.setLayout(new java.awt.GridLayout(5, 1, 10, 10));
+    dialog.setLayout(new java.awt.GridLayout(4, 1, 10, 10));
 
     // Create input fields and labels
-    JLabel currentPasswordLabel = new JLabel("Current Password:");
-    JPasswordField currentPasswordField = new JPasswordField();
-
     JLabel newPasswordLabel = new JLabel("New Password:");
     JPasswordField newPasswordField = new JPasswordField();
 
@@ -139,8 +136,6 @@ public class Login extends javax.swing.JFrame {
     JButton cancelButton = new JButton("Cancel");
 
     // Add components to the dialog
-    dialog.add(currentPasswordLabel);
-    dialog.add(currentPasswordField);
     dialog.add(newPasswordLabel);
     dialog.add(newPasswordField);
     dialog.add(confirmPasswordLabel);
@@ -154,50 +149,32 @@ public class Login extends javax.swing.JFrame {
     // Add button actions
     submitButton.addActionListener(e -> {
         try {
-            String currentPassword = new String(currentPasswordField.getPassword());
             String newPassword = new String(newPasswordField.getPassword());
             String confirmPassword = new String(confirmPasswordField.getPassword());
 
             // Validate inputs
-            if (currentPassword.isEmpty() || newPassword.isEmpty() || confirmPassword.isEmpty()) {
+            if (newPassword.isEmpty() || confirmPassword.isEmpty()) {
                 JOptionPane.showMessageDialog(dialog, "All fields are required.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             if (!newPassword.equals(confirmPassword)) {
-                JOptionPane.showMessageDialog(dialog, "New passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-
-            // Validate current password
-            String query = "SELECT accPassword FROM accountdetails WHERE accUsername = ?";
-            PreparedStatement pst = con.prepareStatement(query);
-            pst.setString(1, username);
-            ResultSet rs = pst.executeQuery();
-
-            if (rs.next()) {
-                String dbPassword = rs.getString("accPassword");
-                if (!dbPassword.equals(currentPassword)) {
-                    JOptionPane.showMessageDialog(dialog, "Current password is incorrect.", "Error", JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-            } else {
-                JOptionPane.showMessageDialog(dialog, "User not found.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Passwords do not match.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
             // Update password in the database
             String updateQuery = "UPDATE accountdetails SET accPassword = ? WHERE accUsername = ?";
-            pst = con.prepareStatement(updateQuery);
+            PreparedStatement pst = con.prepareStatement(updateQuery);
             pst.setString(1, newPassword);
             pst.setString(2, username);
 
             int rowsAffected = pst.executeUpdate();
             if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(dialog, "Password updated successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Password reset successfully.", "Success", JOptionPane.INFORMATION_MESSAGE);
                 dialog.dispose();
             } else {
-                JOptionPane.showMessageDialog(dialog, "Failed to update password.", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dialog, "Failed to reset password.", "Error", JOptionPane.ERROR_MESSAGE);
             }
 
         } catch (SQLException ex) {
@@ -209,7 +186,7 @@ public class Login extends javax.swing.JFrame {
     cancelButton.addActionListener(e -> dialog.dispose());
 
     dialog.setVisible(true);
-}
+} 
 
     /**
      * This method is called from within the constructor to initialize the form.
@@ -293,7 +270,7 @@ public class Login extends javax.swing.JFrame {
             }
         });
 
-        btnLogin.setBackground(new java.awt.Color(69, 125, 88));
+        btnLogin.setBackground(new java.awt.Color(53, 91, 66));
         btnLogin.setFont(new java.awt.Font("Arial", 0, 10)); // NOI18N
         btnLogin.setForeground(new java.awt.Color(255, 255, 255));
         btnLogin.setText("Log In");
@@ -333,52 +310,57 @@ public class Login extends javax.swing.JFrame {
         jPanel3.setLayout(jPanel3Layout);
         jPanel3Layout.setHorizontalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGap(0, 34, Short.MAX_VALUE)
-                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(208, 208, 208))
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel3)
-                .addGap(43, 43, 43)
+                .addGap(65, 65, 65)
                 .addComponent(jLabel1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(jPanel3Layout.createSequentialGroup()
+                .addGap(0, 34, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                                .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 133, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(135, 135, 135))
+                            .addComponent(btnLogin, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 229, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(forgotBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(79, 79, 79)
+                        .addComponent(jLabel5)
+                        .addGap(29, 29, 29))))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(jPanel3Layout.createSequentialGroup()
-                        .addGap(44, 44, 44)
-                        .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                            .addComponent(txtLogPassword)
-                            .addGroup(jPanel3Layout.createSequentialGroup()
-                                .addComponent(forgotBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 116, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                .addComponent(jLabel5))
-                            .addComponent(txtLogUsername))))
-                .addGap(44, 44, 44))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(txtLogPassword, javax.swing.GroupLayout.DEFAULT_SIZE, 282, Short.MAX_VALUE)
+                    .addComponent(txtLogUsername))
+                .addGap(42, 42, 42))
         );
         jPanel3Layout.setVerticalGroup(
             jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel3Layout.createSequentialGroup()
                 .addContainerGap()
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
-                    .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addGap(38, 38, 38)
-                .addComponent(txtLogUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 54, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 89, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel3Layout.createSequentialGroup()
+                        .addComponent(jLabel1)
+                        .addGap(12, 12, 12)
+                        .addComponent(txtLogUsername, javax.swing.GroupLayout.PREFERRED_SIZE, 33, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(18, 18, 18)))
                 .addComponent(txtLogPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(jLabel4)
-                    .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                        .addComponent(jLabel5)
-                        .addComponent(forgotBTN)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 28, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(225, Short.MAX_VALUE))
+                .addComponent(jLabel4)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(btnLogin, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel3Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(forgotBTN)
+                    .addComponent(jLabel5))
+                .addContainerGap(207, Short.MAX_VALUE))
         );
 
         jPanel5.setBackground(new java.awt.Color(37, 42, 26));
@@ -505,7 +487,7 @@ public class Login extends javax.swing.JFrame {
 
     private void forgotBTNMouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_forgotBTNMouseClicked
         // TODO add your handling code here:
-     String username = txtLogUsername.getText().trim();
+    String username = txtLogUsername.getText().trim();
 
     if (username.isEmpty() || username.equals("Username")) {
         JOptionPane.showMessageDialog(null, "Please enter your username in the Username field to proceed.");
@@ -521,8 +503,8 @@ public class Login extends javax.swing.JFrame {
         ResultSet rs = pst.executeQuery();
 
         if (rs.next()) {
-            // Username exists, open the password change dialog
-            showPasswordChangeDialog(username);
+            // Username exists, open the password reset dialog
+            showPasswordResetDialog(username);
         } else {
             // Username does not exist
             JOptionPane.showMessageDialog(null, 

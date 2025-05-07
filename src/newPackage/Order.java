@@ -2,6 +2,7 @@ package newPackage;
 
 public class Order {
     private int orderId;
+    private boolean rated;
     private String username; // Buyer's username
     private String productName;
     private String storeName;
@@ -22,6 +23,10 @@ public class Order {
         this.status = status;
     }
 
+     public void setRated(boolean rated) {
+        this.rated = rated;
+    }
+    
     // Getters
     public int getOrderId() {
         return orderId;
@@ -94,6 +99,10 @@ public class Order {
         this.totalAmount = this.price * this.quantity;
     }
 
+    
+    public boolean isRated() {
+        return rated;
+    }
     // Override toString for better debugging
     @Override
     public String toString() {

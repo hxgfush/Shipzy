@@ -250,7 +250,7 @@ public class AddProduct extends javax.swing.JFrame {
 
         cmbType.setBackground(new java.awt.Color(69, 125, 88));
         cmbType.setForeground(new java.awt.Color(255, 255, 255));
-        cmbType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MISCS", "DRUGS", "BEVERAGE", "CLOTHES", "TOOLS", "GADGETS" }));
+        cmbType.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "MISCS", "DRUGS", "BEVERAGE", "FOOD", "CLOTHES", "TOOLS", "GADGETS" }));
 
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("TYPE ");
