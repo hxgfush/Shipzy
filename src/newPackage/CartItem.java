@@ -15,6 +15,10 @@ public class CartItem {
         this.quantity = quantity;
     }
 
+     public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+    
     // Getters
     public int getCartId() { return cartId; }
     public String getProductName() { return productName; }

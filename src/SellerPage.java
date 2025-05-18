@@ -36,6 +36,7 @@ import java.util.logging.Logger;
 import java.sql.Connection;         /*This the import section which get the fumctoionality from the libraries */
 import java.text.SimpleDateFormat;
 import java.util.logging.Level;
+import java.util.stream.Collectors;
 import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.JButton;
@@ -48,6 +49,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SwingWorker;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 
 
@@ -78,7 +81,9 @@ public class SellerPage extends javax.swing.JFrame {    /*This the is the seller
         jLabel3.setText(this.storename != null ? this.storename : "Unnamed Store");  /*This is used to display the storename when enterimg the frame*/
         this.Name = Name;
         owberLabel.setText(Name); 
-        owberLabel.setText(this.Name != null ? this.Name : "Unnamed Store");  /*This is used to display the store owner name when enterimg the frame*/
+        owberLabel.setText(this.Name != null ? this.Name : "Unnamed Seller");  /*This is used to display the store owner name when enterimg the frame*/
+        searchBTN.addActionListener(e -> performSearch());
+        searchTXT.addActionListener(e -> performSearch());
         try {
             getConnection();
             displayProductCards();
@@ -186,13 +191,18 @@ private void editProduct(Product product, JPanel card, String originalName) {
     // Create a dialog for editing
     JDialog editDialog = new JDialog(this, "Edit Product", true);
     editDialog.setLayout(new BorderLayout());
-    editDialog.setSize(500, 500); // Increased size for image previews
-    
+
     // Form panel
     JPanel formPanel = new JPanel();
     formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
     formPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
     
+    // Calculate discount percentage if applicable
+    double discountPercent = 0;
+    if (product.getOriginalPrice() > 0 && product.getPrice() < product.getOriginalPrice()) {
+        discountPercent = ((product.getOriginalPrice() - product.getPrice()) / product.getOriginalPrice()) * 100;
+    }
+
     // Form fields
     JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     namePanel.add(new JLabel("Product Name:"));
@@ -204,12 +214,51 @@ private void editProduct(Product product, JPanel card, String originalName) {
     JTextField taglineField = new JTextField(product.getTagline(), 20);
     taglinePanel.add(taglineField);
     
-    JPanel pricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    pricePanel.add(new JLabel("Price:"));
-    JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 10);
-    pricePanel.add(priceField);
+    // Original Price Panel
+    JPanel originalPricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    originalPricePanel.add(new JLabel("Original Price:"));
+    JTextField originalPriceField = new JTextField(String.valueOf(product.getOriginalPrice() > 0 ? 
+        product.getOriginalPrice() : product.getPrice()), 10);
+    originalPricePanel.add(originalPriceField);
     
-    // Image panels
+    // Discount Percentage Panel
+    JPanel discountPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    discountPanel.add(new JLabel("Discount %:"));
+    JTextField discountField = new JTextField(String.format("%.0f", discountPercent), 5);
+    discountPanel.add(discountField);
+    
+    // Final Price Panel (read-only)
+    JPanel finalPricePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    finalPricePanel.add(new JLabel("Final Price:"));
+    JLabel finalPriceLabel = new JLabel(String.format("₱%.2f", product.getPrice()));
+    finalPriceLabel.setFont(new Font("SansSerif", Font.BOLD, 12));
+    finalPricePanel.add(finalPriceLabel);
+    
+    // Add listener to recalculate price when discount changes
+    discountField.getDocument().addDocumentListener(new DocumentListener() {
+        @Override
+        public void insertUpdate(DocumentEvent e) { updatePrice(); }
+        @Override
+        public void removeUpdate(DocumentEvent e) { updatePrice(); }
+        @Override
+        public void changedUpdate(DocumentEvent e) { updatePrice(); }
+        
+        private void updatePrice() {
+            try {
+                double originalPrice = Double.parseDouble(originalPriceField.getText());
+                double discount = Double.parseDouble(discountField.getText());
+                
+                if (discount >= 0 && discount <= 100) {
+                    double finalPrice = originalPrice * (1 - (discount / 100));
+                    finalPriceLabel.setText(String.format("₱%.2f", finalPrice));
+                }
+            } catch (NumberFormatException ex) {
+                // Ignore invalid inputs
+            }
+        }
+    });
+    
+    // Image panels (same as before)
     JPanel image1Panel = new JPanel(new BorderLayout());
     image1Panel.add(new JLabel("Image 1:"), BorderLayout.NORTH);
     JLabel image1Label = new JLabel();
@@ -261,7 +310,9 @@ private void editProduct(Product product, JPanel card, String originalName) {
     // Add components to form panel
     formPanel.add(namePanel);
     formPanel.add(taglinePanel);
-    formPanel.add(pricePanel);
+    formPanel.add(originalPricePanel);
+    formPanel.add(discountPanel);
+    formPanel.add(finalPricePanel);
     formPanel.add(image1Panel);
     formPanel.add(image2Panel);
     
@@ -273,25 +324,49 @@ private void editProduct(Product product, JPanel card, String originalName) {
             // Update the product object
             product.setProductName(nameField.getText());
             product.setTagline(taglineField.getText());
-            product.setPrice(Double.parseDouble(priceField.getText()));
             
-            // Update database with images
-            updateProductInDatabaseWithImages(product);
+            double originalPrice = Double.parseDouble(originalPriceField.getText());
+            double newDiscountPercent = Double.parseDouble(discountField.getText());
+            
+            if (newDiscountPercent > 0) {
+                double finalPrice = originalPrice * (1 - (newDiscountPercent / 100));
+                product.setOriginalPrice(originalPrice);
+                product.setPrice(finalPrice);
+            } else {
+                // No discount
+                product.setOriginalPrice(0); // Or originalPrice if you want to keep it
+                product.setPrice(originalPrice);
+            }
+            
+            // Update database with images and prices
+            updateProductInDatabaseWithImagesAndPrices(product);
             
             // Refresh the card
             refreshCard(card, product);
             
             editDialog.dispose();
         } catch (NumberFormatException ex) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid price", 
+            JOptionPane.showMessageDialog(this, "Please enter valid numbers for prices/discount", 
                 "Error", JOptionPane.ERROR_MESSAGE);
         }
     });
     
     buttonPanel.add(saveButton);
-    
-    editDialog.add(formPanel, BorderLayout.CENTER);
+
+    // Wrap the formPanel in a scroll pane
+    JScrollPane scrollPane = new JScrollPane(formPanel);
+    scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
+    // Set a smaller preferred size for the dialog
+    editDialog.setPreferredSize(new Dimension(500, 500)); // Adjusted for comfort
+
+    editDialog.add(scrollPane, BorderLayout.CENTER);
     editDialog.add(buttonPanel, BorderLayout.SOUTH);
+
+    // Pack to fit content, then center
+    editDialog.pack();
     editDialog.setLocationRelativeTo(this);
     editDialog.setVisible(true);
 }
@@ -352,29 +427,30 @@ private byte[] selectImage() {
     }
     return null;
 }
-private void updateProductInDatabaseWithImages(Product product) {
-    String query = "UPDATE products SET product_name=?, tagline=?, price=?, image1=?, image2=? WHERE product_id=?";
+private void updateProductInDatabaseWithImagesAndPrices(Product product) {
+    String query = "UPDATE products SET product_name=?, tagline=?, price=?, original_price=?, image1=?, image2=? WHERE product_id=?";
     
     try {
         PreparedStatement param = con.prepareStatement(query);
         param.setString(1, product.getProductName());
         param.setString(2, product.getTagline());
         param.setDouble(3, product.getPrice());
+        param.setDouble(4, product.getOriginalPrice());
         
         // Set images (can be null)
         if (product.getImage1() != null) {
-            param.setBytes(4, product.getImage1());
-        } else {
-            param.setNull(4, Types.BLOB);
-        }
-        
-        if (product.getImage2() != null) {
-            param.setBytes(5, product.getImage2());
+            param.setBytes(5, product.getImage1());
         } else {
             param.setNull(5, Types.BLOB);
         }
         
-        param.setInt(6, product.getProductId());
+        if (product.getImage2() != null) {
+            param.setBytes(6, product.getImage2());
+        } else {
+            param.setNull(6, Types.BLOB);
+        }
+        
+        param.setInt(7, product.getProductId());
 
         int rowsAffected = param.executeUpdate();
 
@@ -569,11 +645,84 @@ private List<Feedback> getStoreFeedbacks(String storename) throws SQLException {
     }
     return feedbacks;
 }
+private void performSearch() {
+    String searchTerm = searchTXT.getText().trim().toLowerCase();
+    
+    if (searchTerm.isEmpty()) {
+        displayProductCards(); // Show all products if search is empty
+        return;
+    }
+    
+    try {
+        jTabbedPane2.removeAll();
+        jTabbedPane2.addTab("Products", new JLabel("Searching products..."));
+        
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            JPanel cardsPanel;
+            
+            @Override
+            protected Void doInBackground() throws Exception {
+                Connection conn = getConnection();
+                ProductDAO productDAO = new ProductDAO(conn);
+                List<Product> allProducts = productDAO.getProductsByStore(storename);
+                
+                // Filter products based on search term
+                List<Product> filteredProducts = allProducts.stream()
+                    .filter(p -> p.getProductName().toLowerCase().contains(searchTerm) || 
+                                p.getTagline().toLowerCase().contains(searchTerm))
+                    .collect(Collectors.toList());
+                
+                cardsPanel = new JPanel();
+                cardsPanel.setLayout(new BoxLayout(cardsPanel, BoxLayout.Y_AXIS));
+                cardsPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
+                cardsPanel.setBackground(new Color(62,93,59));
+                
+                if (filteredProducts.isEmpty()) {
+                    cardsPanel.add(new JLabel("No products match your search: " + searchTerm));
+                } else {
+                    for (Product product : filteredProducts) {
+                        JPanel card = createProductCard(product);
+                        card.setAlignmentX(Component.LEFT_ALIGNMENT);
+                        cardsPanel.add(card);
+                        cardsPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+                    }
+                }
+                return null;
+            }
+            
+            @Override
+            protected void done() {
+                try {
+                    get();
+                    JScrollPane scrollPane = new JScrollPane(cardsPanel);
+                    scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+                    scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+                    scrollPane.setBackground(new Color(62,93,59));
+                    scrollPane.setBorder(null);
+                    
+                    jTabbedPane2.removeAll();
+                    jTabbedPane2.addTab("Search Results", scrollPane);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(SellerPage.this, 
+                        "Error searching products: " + ex.getMessage(),
+                        "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        };
+        worker.execute();
+    } catch (Exception ex) {
+        ex.printStackTrace();
+        JOptionPane.showMessageDialog(this, 
+            "Error initializing search: " + ex.getMessage(),
+            "Error", JOptionPane.ERROR_MESSAGE);
+    }
+}
 
 //LOADER
 private List<Order> getOrdersForStore(String storename) throws SQLException {
     List<Order> orders = new ArrayList<>();
-    String query = "SELECT order_id, username, product_name, store_name, price, quantity, total_amount, status " +
+    String query = "SELECT order_id, username, product_name, store_name, price, quantity, total_amount, status, payment " +
                    "FROM orders WHERE store_name = ?";
 
     try (PreparedStatement pst = con.prepareStatement(query)) {
@@ -582,19 +731,20 @@ private List<Order> getOrdersForStore(String storename) throws SQLException {
 
         while (rs.next()) {
             int orderId = rs.getInt("order_id");
-            String username = rs.getString("username"); // Buyer’s username
+            String username = rs.getString("username"); // Buyer's username
             String productName = rs.getString("product_name");
             String storeName = rs.getString("store_name");
             double price = rs.getDouble("price");
             int quantity = rs.getInt("quantity");
             double totalAmount = rs.getDouble("total_amount");
             String status = rs.getString("status"); // Fetch status
+            String paymentType = rs.getString("payment");
             // Create an Order object and add it to the list
-            orders.add(new Order(orderId, username, productName, storeName, price, quantity, totalAmount, status));
+            orders.add(new Order(orderId, username, productName, storeName, price, quantity, totalAmount, status, paymentType));
         }
     }
     return orders;
-}  
+} 
 
 //DISPLAYER
 private void displayProductCards() {
@@ -788,7 +938,11 @@ private JPanel createProductCard(Product product) {// This function used for cre
         BorderFactory.createEmptyBorder(15, 15, 15, 15)
     ));
     card.setBackground(new Color(69, 125, 88));
-    card.setPreferredSize(new Dimension(500, 200)); // Wider horizontal card
+    // Set fixed size for the product card
+    Dimension fixedSize = new Dimension(700, 200);
+    card.setPreferredSize(fixedSize);
+    card.setMaximumSize(fixedSize);
+    card.setMinimumSize(fixedSize);
 
     // Left panel for text content
     JPanel leftPanel = new JPanel();
@@ -975,9 +1129,10 @@ private JPanel createOrderCard(Order order) {
         // For pending orders - show Cancel and Received buttons
         JButton cancelButton = new JButton("Cancel Order");
         cancelButton.setFont(new Font("SansSerif", Font.PLAIN, 12));
-        cancelButton.setBackground(new Color(200, 50, 50)); // Red color
+        cancelButton.setBackground(new Color(255, 102, 102)); // Red color
         cancelButton.setForeground(Color.WHITE);
         cancelButton.setBorderPainted(false);
+        cancelButton.setFocusPainted(false);
         cancelButton.addActionListener(e -> cancelOrder(order, card));
         buttonPanel.add(cancelButton);
 
@@ -1008,22 +1163,12 @@ public class ProductDAO {
         this.con = con;
     }
     
-   public List<Product> getProductsByStore(String storename) throws SQLException {
+ public List<Product> getProductsByStore(String storename) throws SQLException {
     List<Product> products = new ArrayList<>();
-    String query = "SELECT " +
-           "product_id, " +
-           "product_name, " +
-           "COALESCE(storename, 'Default Store') as storename, " +
-           "COALESCE(type, 'Unknown') as type, " +
-           "COALESCE(tagline, '') as tagline, " +
-           "price, " +
-           "COALESCE(original_price, price) as original_price, " +
-           "image1, " +
-           "image2, " +
-           "COALESCE(rating, 0.0) as rating, " +
-           "COALESCE(location, '') as location " +
-           "FROM products WHERE storename = ?";  // Added WHERE clause with parameter
-        
+    String query = "SELECT product_id, product_name, storename, type, tagline, price, " +
+                  "original_price, image1, image2, rating, location " +
+                  "FROM products WHERE storename = ?";
+    
     try (PreparedStatement stmt = con.prepareStatement(query)) {
         stmt.setString(1, storename);
         ResultSet rs = stmt.executeQuery();
@@ -1041,7 +1186,8 @@ public class ProductDAO {
             String location = rs.getString("location");
             String type = rs.getString("type");
             
-            products.add(new Product(id, name, store, type, tagline, price, originalPrice, image1, image2, rating, location));
+            products.add(new Product(id, name, store, type, tagline, price, 
+                                   originalPrice, image1, image2, rating, location));
         }
     }
     return products;
@@ -1055,17 +1201,23 @@ private JPanel createFeedbackCard(Feedback feedback) {
         BorderFactory.createEmptyBorder(15, 15, 15, 15)
     ));
     card.setBackground(new Color(69, 125, 88));
-    card.setPreferredSize(new Dimension(700, 150));
+    // Set fixed size for the feedback card
+    Dimension fixedSize = new Dimension(700, 150);
+    card.setPreferredSize(fixedSize);
+    card.setMaximumSize(fixedSize);
+    card.setMinimumSize(fixedSize);
     
-    // Buyer info
+    // Buyer info (left aligned)
     JLabel buyerLabel = new JLabel("Buyer: " + feedback.getUsername());
     buyerLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
     buyerLabel.setForeground(Color.WHITE);
+    buyerLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     
-    // Product info
+    // Product info (left aligned)
     JLabel productLabel = new JLabel("Product: " + feedback.getProductName());
     productLabel.setFont(new Font("SansSerif", Font.PLAIN, 12));
     productLabel.setForeground(Color.WHITE);
+    productLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
     
     // Rating stars - using text stars if images not found
     JPanel ratingPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
@@ -1130,11 +1282,12 @@ private JPanel createFeedbackCard(Feedback feedback) {
         jPanel5 = new javax.swing.JPanel();
         jLabel6 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
-        jButton6 = new javax.swing.JButton();
+        exitBTN = new javax.swing.JButton();
         btnInfo = new javax.swing.JButton();
         btnFeedback = new javax.swing.JButton();
         btnOrder = new javax.swing.JButton();
         btnProducts = new javax.swing.JButton();
+        messageBTN = new javax.swing.JButton();
         parent = new javax.swing.JPanel();
         Myproducts = new javax.swing.JPanel();
         jLabel3 = new javax.swing.JLabel();
@@ -1207,12 +1360,12 @@ private JPanel createFeedbackCard(Feedback feedback) {
 
         jPanel2.setBackground(new java.awt.Color(52, 70, 49));
 
-        jButton6.setBackground(new java.awt.Color(53, 91, 66));
-        jButton6.setForeground(new java.awt.Color(255, 255, 255));
-        jButton6.setText("LOG OUT");
-        jButton6.addActionListener(new java.awt.event.ActionListener() {
+        exitBTN.setBackground(new java.awt.Color(53, 91, 66));
+        exitBTN.setForeground(new java.awt.Color(255, 255, 255));
+        exitBTN.setText("EXIT");
+        exitBTN.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                jButton6ActionPerformed(evt);
+                exitBTNActionPerformed(evt);
             }
         });
 
@@ -1236,7 +1389,7 @@ private JPanel createFeedbackCard(Feedback feedback) {
 
         btnOrder.setBackground(new java.awt.Color(53, 91, 66));
         btnOrder.setForeground(new java.awt.Color(255, 255, 255));
-        btnOrder.setText("Order");
+        btnOrder.setText("Store Orders");
         btnOrder.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnOrderActionPerformed(evt);
@@ -1252,6 +1405,15 @@ private JPanel createFeedbackCard(Feedback feedback) {
             }
         });
 
+        messageBTN.setBackground(new java.awt.Color(53, 91, 66));
+        messageBTN.setForeground(new java.awt.Color(255, 255, 255));
+        messageBTN.setText("Messages");
+        messageBTN.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                messageBTNActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout jPanel2Layout = new javax.swing.GroupLayout(jPanel2);
         jPanel2.setLayout(jPanel2Layout);
         jPanel2Layout.setHorizontalGroup(
@@ -1261,10 +1423,11 @@ private JPanel createFeedbackCard(Feedback feedback) {
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(btnProducts, javax.swing.GroupLayout.PREFERRED_SIZE, 119, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(jButton6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(exitBTN, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnInfo, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                         .addComponent(btnFeedback, javax.swing.GroupLayout.DEFAULT_SIZE, 118, Short.MAX_VALUE)
-                        .addComponent(btnOrder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addComponent(btnOrder, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(messageBTN, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addContainerGap(53, Short.MAX_VALUE))
         );
         jPanel2Layout.setVerticalGroup(
@@ -1278,8 +1441,10 @@ private JPanel createFeedbackCard(Feedback feedback) {
                 .addComponent(btnFeedback, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(btnInfo, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(199, 199, 199)
-                .addComponent(jButton6, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(messageBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(139, 139, 139)
+                .addComponent(exitBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(264, Short.MAX_VALUE))
         );
 
@@ -1368,11 +1533,11 @@ private JPanel createFeedbackCard(Feedback feedback) {
                             .addGroup(MyproductsLayout.createSequentialGroup()
                                 .addContainerGap()
                                 .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 162, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(24, 24, 24)
+                                .addGap(137, 137, 137)
                                 .addComponent(searchTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 210, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                                 .addComponent(searchBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 34, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(0, 374, Short.MAX_VALUE)))
+                        .addGap(0, 261, Short.MAX_VALUE)))
                 .addContainerGap())
             .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                 .addGroup(MyproductsLayout.createSequentialGroup()
@@ -1389,10 +1554,11 @@ private JPanel createFeedbackCard(Feedback feedback) {
                     .addComponent(owberLabel)
                     .addComponent(jLabel5))
                 .addGap(35, 35, 35)
-                .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(searchBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(searchBTN, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addGroup(MyproductsLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                        .addComponent(jButton1, javax.swing.GroupLayout.PREFERRED_SIZE, 42, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(searchTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addContainerGap(649, Short.MAX_VALUE))
@@ -1720,11 +1886,10 @@ private JPanel createFeedbackCard(Feedback feedback) {
 
     }//GEN-LAST:event_jLabel6MouseClicked
     private void infoBTNdeleteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_infoBTNdeleteActionPerformed
-        // TODO add your handling code here:
         // Confirm deletion
     int confirm = JOptionPane.showConfirmDialog(
         this,
-        "Are you sure you want to delete your store and all its products? This cannot be undone.",
+        "Are you sure you want to delete your store? This will remove your store information but keep your account.",
         "Confirm Store Deletion",
         JOptionPane.YES_NO_OPTION,
         JOptionPane.WARNING_MESSAGE
@@ -1732,28 +1897,22 @@ private JPanel createFeedbackCard(Feedback feedback) {
     
     if (confirm == JOptionPane.YES_OPTION) {
         try {
-            // First delete all products associated with the store
-            String deleteProductsQuery = "DELETE FROM products WHERE Storename = ?";
-            PreparedStatement deleteProductsStmt = con.prepareStatement(deleteProductsQuery);
-            deleteProductsStmt.setString(1, storename);
-            deleteProductsStmt.executeUpdate();
-            
-            // Then delete the store
-            String deleteStoreQuery = "DELETE FROM sellermanager WHERE Sellerid = ?";
-            PreparedStatement deleteStoreStmt = con.prepareStatement(deleteStoreQuery);
-            deleteStoreStmt.setInt(1, id);
-            int rowsAffected = deleteStoreStmt.executeUpdate();
+            // Only clear the store name in the user table (not delete the user)
+            String updateQuery = "UPDATE users SET Store_name = NULL WHERE User_id = ?";
+            PreparedStatement updateStmt = con.prepareStatement(updateQuery);
+            updateStmt.setInt(1, id);
+            int rowsAffected = updateStmt.executeUpdate();
             
             if (rowsAffected > 0) {
-                JOptionPane.showMessageDialog(this, "Store and all its products deleted successfully");
+                // Also delete all products associated with this store
+                String deleteProductsQuery = "DELETE FROM products WHERE storename = ?";
+                PreparedStatement deleteProductsStmt = con.prepareStatement(deleteProductsQuery);
+                deleteProductsStmt.setString(1, storename);
+                deleteProductsStmt.executeUpdate();
+                
+                JOptionPane.showMessageDialog(this, "Store deleted successfully. Your account remains active.");
                 
                 // Close the seller page and go back to homepage
-                String firstname = null;
-                String lastname = null;
-                String Username = null;
-                Homepage Homepage = null;
-                var homepage = new Homepage(Homepage, firstname, lastname, Username);
-                homepage.setVisible(true);
                 this.dispose();
             } else {
                 JOptionPane.showMessageDialog(this, "Failed to delete store", "Error", JOptionPane.ERROR_MESSAGE);
@@ -1781,7 +1940,7 @@ private JPanel createFeedbackCard(Feedback feedback) {
     
     try {
         // Update only storename and contact in database
-        String query = "UPDATE sellermanager SET Storename = ?, Contact = ? WHERE Sellerid = ?";
+        String query = "UPDATE users SET Store_name = ?, Contacts = ? WHERE User_id = ?";
         PreparedStatement stmt = con.prepareStatement(query);
         stmt.setString(1, newStoreName);
         stmt.setString(2, newContact);
@@ -1884,21 +2043,22 @@ private JPanel createFeedbackCard(Feedback feedback) {
         parent.repaint();
         parent.revalidate();
     }//GEN-LAST:event_btnProductsActionPerformed
-    private void jButton6ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton6ActionPerformed
+    private void exitBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_exitBTNActionPerformed
         // TODO add your handling code here:
            int confirm = JOptionPane.showConfirmDialog(
         SellerPage.this,
-        "Are you sure you want to LOG OUT?",
-        "Confirm LOG OUT",
+        "Are you sure you want to EXIT?",
+        "Confirm EXIT",
         JOptionPane.YES_NO_OPTION);
      
     if (confirm == JOptionPane.YES_OPTION) {
         // Create new Homepage with stored user info
-        Homepage home = new Homepage(null, this.Name, "", this.username);
-        home.setVisible(true);
         this.dispose();
     } 
-    }//GEN-LAST:event_jButton6ActionPerformed
+    }//GEN-LAST:event_exitBTNActionPerformed
+    private void messageBTNActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_messageBTNActionPerformed
+        // TODO add your handling code here:
+    }//GEN-LAST:event_messageBTNActionPerformed
 
     /**
      * @param args the command line arguments
@@ -1951,6 +2111,7 @@ private JPanel createFeedbackCard(Feedback feedback) {
     private javax.swing.JButton btnOrder;
     private javax.swing.JButton btnProducts;
     private javax.swing.JPanel editPanel;
+    private javax.swing.JButton exitBTN;
     private javax.swing.JTabbedPane feedbackTAB;
     private javax.swing.JButton infoBTNconfirm;
     private javax.swing.JButton infoBTNdelete;
@@ -1961,7 +2122,6 @@ private JPanel createFeedbackCard(Feedback feedback) {
     private javax.swing.JTextField infoTXTcontact;
     private javax.swing.JTextField infoTXTstorename;
     private javax.swing.JButton jButton1;
-    private javax.swing.JButton jButton6;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel10;
     private javax.swing.JLabel jLabel11;
@@ -1982,6 +2142,7 @@ private JPanel createFeedbackCard(Feedback feedback) {
     private javax.swing.JPanel jPanel5;
     private javax.swing.JTabbedPane jTabbedPane2;
     private javax.swing.JToggleButton jToggleButton1;
+    private javax.swing.JButton messageBTN;
     private javax.swing.JTabbedPane orderTAB;
     private javax.swing.JLabel owberLabel;
     private javax.swing.JPanel parent;

@@ -18,14 +18,12 @@ import javax.swing.ImageIcon;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import java.awt.Image;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 public class AddProduct extends javax.swing.JFrame {
     // this will hold the value
@@ -39,6 +37,9 @@ public class AddProduct extends javax.swing.JFrame {
      */
     public AddProduct(String Storename, String Location) {
         initComponents();
+        // Replace the txtDiscounpercent initialization with:
+finalPriceLabel.setForeground(new java.awt.Color(255, 255, 255));
+finalPriceLabel.setText("₱0.00");
         this.storename = Storename; 
         this.location = Location;
         txtLocation.setText(location);
@@ -47,6 +48,23 @@ public class AddProduct extends javax.swing.JFrame {
         } catch (SQLException ex) {
             Logger.getLogger(AddProduct.class.getName()).log(Level.SEVERE, null, ex);
         }
+         DocumentListener docListener = new DocumentListener() {
+        @Override
+        public void insertUpdate(DocumentEvent e) {
+            calculateFinalPrice();
+        }
+        @Override
+        public void removeUpdate(DocumentEvent e) {
+            calculateFinalPrice();
+        }
+        @Override
+        public void changedUpdate(DocumentEvent e) {
+            calculateFinalPrice();
+        }
+    };
+    
+    txtOriginal.getDocument().addDocumentListener(docListener);
+    discountTXT.getDocument().addDocumentListener(docListener);    
     }
    //onnection method
      Connection con;
@@ -76,6 +94,25 @@ public class AddProduct extends javax.swing.JFrame {
      }
 
 
+
+private void calculateFinalPrice() {
+    try {
+        double originalPrice = Double.parseDouble(txtOriginal.getText());
+        double discountPercent = Double.parseDouble(discountTXT.getText());
+        
+        // Validate discount range (0-100)
+        discountPercent = Math.max(0, Math.min(100, discountPercent));
+        
+        // Calculate final price
+        double finalPrice = originalPrice * (1 - (discountPercent / 100.0));
+        finalPrice = Math.max(0, finalPrice); // Ensure price doesn't go negative
+        
+        finalPriceLabel.setText(String.format("₱%.2f", finalPrice));
+    } catch (NumberFormatException e) {
+        finalPriceLabel.setText("Invalid input");
+    }
+}
+     
      
     /**
      * This method is called from within the constructor to initialize the form.
@@ -88,7 +125,6 @@ public class AddProduct extends javax.swing.JFrame {
 
         jPopupMenu1 = new javax.swing.JPopupMenu();
         jPanel1 = new javax.swing.JPanel();
-        txtPrice = new javax.swing.JTextField();
         jLabel3 = new javax.swing.JLabel();
         jPanel2 = new javax.swing.JPanel();
         image1 = new javax.swing.JLabel();
@@ -109,16 +145,16 @@ public class AddProduct extends javax.swing.JFrame {
         jLabel6 = new javax.swing.JLabel();
         cmbType = new javax.swing.JComboBox<>();
         jLabel7 = new javax.swing.JLabel();
+        jLabel8 = new javax.swing.JLabel();
+        finalPriceLabel = new javax.swing.JLabel();
+        discountTXT = new javax.swing.JTextField();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
         jPanel1.setBackground(new java.awt.Color(42, 58, 41));
 
-        txtPrice.setBackground(new java.awt.Color(255, 255, 255));
-        txtPrice.setForeground(new java.awt.Color(0, 0, 0));
-
         jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("DIscounted Price:");
+        jLabel3.setText("Discount Percent:");
 
         image1.setText("                          image1");
 
@@ -255,15 +291,22 @@ public class AddProduct extends javax.swing.JFrame {
         jLabel7.setForeground(new java.awt.Color(255, 255, 255));
         jLabel7.setText("TYPE ");
 
+        jLabel8.setFont(new java.awt.Font("Segoe UI", 1, 18)); // NOI18N
+        jLabel8.setForeground(new java.awt.Color(255, 255, 255));
+        jLabel8.setText("Final Price:");
+
+        finalPriceLabel.setForeground(new java.awt.Color(255, 255, 255));
+        finalPriceLabel.setText("final price");
+
+        discountTXT.setBackground(new java.awt.Color(255, 255, 255));
+        discountTXT.setForeground(new java.awt.Color(0, 0, 0));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -275,32 +318,56 @@ public class AddProduct extends javax.swing.JFrame {
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel7)
-                            .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addGap(11, 11, 11)
+                            .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addGap(21, 21, 21)
+                        .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 152, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(36, 36, 36)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(txtPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3)))
-                    .addComponent(upload1)
+                        .addGap(11, 11, 11)
+                        .addComponent(upload1))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(52, 52, 52)
+                        .addGap(11, 11, 11)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(upload2)
-                            .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(12, Short.MAX_VALUE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel8)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(finalPriceLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 78, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 218, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(jPanel1Layout.createSequentialGroup()
+                                        .addComponent(jLabel3)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                        .addComponent(discountTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 41, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(upload2)
+                                    .addComponent(jPanel3, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))))
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
-                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(29, 29, 29)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel6)
+                            .addComponent(jLabel7))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(43, 43, 43)
+                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(jLabel8, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(finalPriceLabel)))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                             .addComponent(jPanel3, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                             .addComponent(jPanel2, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
@@ -308,25 +375,15 @@ public class AddProduct extends javax.swing.JFrame {
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                             .addComponent(upload2)
                             .addComponent(upload1))
-                        .addGap(23, 23, 23)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel5)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(txtPrice, javax.swing.GroupLayout.PREFERRED_SIZE, 39, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGap(18, 18, 18)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(jLabel6)
-                            .addComponent(jLabel7))
+                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 22, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(txtOriginal, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(jLabel5)
+                            .addComponent(discountTXT, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(cmbType, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                .addContainerGap(15, Short.MAX_VALUE))
+                        .addComponent(save, javax.swing.GroupLayout.PREFERRED_SIZE, 40, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(16, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -405,38 +462,37 @@ private void saveProductToDatabase() {
     // Validate inputs
     if (txtProductname.getText().trim().isEmpty() || 
         txtTagline.getText().trim().isEmpty() || 
-        txtPrice.getText().trim().isEmpty() || 
-        txtOriginal.getText().trim().isEmpty()) {
+        txtOriginal.getText().trim().isEmpty() ||
+        discountTXT.getText().trim().isEmpty()) {
         JOptionPane.showMessageDialog(this, "Please fill in all fields", 
             "Validation Error", JOptionPane.WARNING_MESSAGE);
         return;
     }
 
     try {
-        double price;
-        double original_price;
-        try {
-            price = Double.parseDouble(txtPrice.getText());
-            original_price = Double.parseDouble(txtOriginal.getText());
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Please enter a valid price", 
-                "Validation Error", JOptionPane.WARNING_MESSAGE);
-            return;
-        }
+        double originalPrice = Double.parseDouble(txtOriginal.getText());
+        double discountPercent = Double.parseDouble(discountTXT.getText());
+        
+        // Validate discount range
+        discountPercent = Math.max(0, Math.min(100, discountPercent));
+        
+        // Calculate final price
+        double finalPrice = originalPrice * (1 - (discountPercent / 100.0));
+        finalPrice = Math.max(0, finalPrice);
 
         // Get the selected product type
         String productType = (String) cmbType.getSelectedItem();
 
-        // Prepare SQL statement (now includes type)
+        // Prepare SQL statement
         String sql = "INSERT INTO products (product_name, storename, tagline, price, original_price, " +
-                     "image1, image2, location, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                   "image1, image2, location, type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         
         try (PreparedStatement pstmt = con.prepareStatement(sql)) {
             pstmt.setString(1, txtProductname.getText());
             pstmt.setString(2, storename);
             pstmt.setString(3, txtTagline.getText());
-            pstmt.setDouble(4, price);
-            pstmt.setDouble(5, original_price);
+            pstmt.setDouble(4, finalPrice);
+            pstmt.setDouble(5, originalPrice);
             
             // Set images (use null if not uploaded)
             if (image1Data != null) {
@@ -452,7 +508,7 @@ private void saveProductToDatabase() {
             }
             
             pstmt.setString(8, txtLocation.getText());
-            pstmt.setString(9, productType); // Add the product type
+            pstmt.setString(9, productType);
             
             // Execute update
             int rowsAffected = pstmt.executeUpdate();
@@ -467,6 +523,9 @@ private void saveProductToDatabase() {
                     "Error", JOptionPane.ERROR_MESSAGE);
             }
         }
+    } catch (NumberFormatException e) {
+        JOptionPane.showMessageDialog(this, "Please enter valid numbers (0-100 for discount)", 
+            "Validation Error", JOptionPane.WARNING_MESSAGE);
     } catch (SQLException ex) {
         JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), 
             "Error", JOptionPane.ERROR_MESSAGE);
@@ -474,17 +533,18 @@ private void saveProductToDatabase() {
     }
 }
 
-    private void clearForm() {
-        txtProductname.setText("");
-        txtTagline.setText("");
-        txtPrice.setText("");
-        txtOriginal.setText("");
-        image1.setIcon(null);
-        image2.setIcon(null);
-        image1Data = null;
-        image2Data = null;
-    }
-
+private void clearForm() {
+    txtProductname.setText("");
+    txtTagline.setText("");
+    txtOriginal.setText("");
+    finalPriceLabel.setText("₱0.00");
+    image1.setIcon(null);
+    image1.setText("                          image1");
+    image2.setIcon(null);
+    image2.setText("                                image2");
+    image1Data = null;
+    image2Data = null;
+}
     
     /**
      * @param args the command line arguments
@@ -526,6 +586,8 @@ private void saveProductToDatabase() {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> cmbType;
+    private javax.swing.JTextField discountTXT;
+    private javax.swing.JLabel finalPriceLabel;
     private javax.swing.JLabel image1;
     private javax.swing.JLabel image2;
     private javax.swing.JLabel jLabel1;
@@ -535,6 +597,7 @@ private void saveProductToDatabase() {
     private javax.swing.JLabel jLabel5;
     private javax.swing.JLabel jLabel6;
     private javax.swing.JLabel jLabel7;
+    private javax.swing.JLabel jLabel8;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JPanel jPanel2;
     private javax.swing.JPanel jPanel3;
@@ -543,7 +606,6 @@ private void saveProductToDatabase() {
     private javax.swing.JButton save;
     private javax.swing.JTextField txtLocation;
     private javax.swing.JTextField txtOriginal;
-    private javax.swing.JTextField txtPrice;
     private javax.swing.JTextField txtProductname;
     private javax.swing.JTextField txtTagline;
     private javax.swing.JButton upload1;

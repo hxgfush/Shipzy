@@ -128,10 +128,11 @@
                       <Group type="103" groupAlignment="1" attributes="0">
                           <Component id="btnProducts" min="-2" pref="119" max="-2" attributes="0"/>
                           <Group type="103" groupAlignment="0" max="-2" attributes="0">
-                              <Component id="jButton6" max="32767" attributes="0"/>
+                              <Component id="exitBTN" max="32767" attributes="0"/>
                               <Component id="btnInfo" max="32767" attributes="0"/>
                               <Component id="btnFeedback" pref="118" max="32767" attributes="0"/>
                               <Component id="btnOrder" max="32767" attributes="0"/>
+                              <Component id="messageBTN" alignment="1" max="32767" attributes="0"/>
                           </Group>
                       </Group>
                       <EmptySpace pref="53" max="32767" attributes="0"/>
@@ -149,15 +150,17 @@
                       <Component id="btnFeedback" min="-2" pref="39" max="-2" attributes="0"/>
                       <EmptySpace type="separate" max="-2" attributes="0"/>
                       <Component id="btnInfo" min="-2" pref="42" max="-2" attributes="0"/>
-                      <EmptySpace min="-2" pref="199" max="-2" attributes="0"/>
-                      <Component id="jButton6" min="-2" pref="39" max="-2" attributes="0"/>
+                      <EmptySpace type="separate" max="-2" attributes="0"/>
+                      <Component id="messageBTN" min="-2" pref="42" max="-2" attributes="0"/>
+                      <EmptySpace min="-2" pref="139" max="-2" attributes="0"/>
+                      <Component id="exitBTN" min="-2" pref="39" max="-2" attributes="0"/>
                       <EmptySpace pref="264" max="32767" attributes="0"/>
                   </Group>
               </Group>
             </DimensionLayout>
           </Layout>
           <SubComponents>
-            <Component class="javax.swing.JButton" name="jButton6">
+            <Component class="javax.swing.JButton" name="exitBTN">
               <Properties>
                 <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="42" green="5b" red="35" type="rgb"/>
@@ -165,10 +168,10 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="LOG OUT"/>
+                <Property name="text" type="java.lang.String" value="EXIT"/>
               </Properties>
               <Events>
-                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="jButton6ActionPerformed"/>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="exitBTNActionPerformed"/>
               </Events>
             </Component>
             <Component class="javax.swing.JButton" name="btnInfo">
@@ -207,7 +210,7 @@
                 <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
                   <Color blue="ff" green="ff" red="ff" type="rgb"/>
                 </Property>
-                <Property name="text" type="java.lang.String" value="Order"/>
+                <Property name="text" type="java.lang.String" value="Store Orders"/>
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnOrderActionPerformed"/>
@@ -225,6 +228,20 @@
               </Properties>
               <Events>
                 <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="btnProductsActionPerformed"/>
+              </Events>
+            </Component>
+            <Component class="javax.swing.JButton" name="messageBTN">
+              <Properties>
+                <Property name="background" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="42" green="5b" red="35" type="rgb"/>
+                </Property>
+                <Property name="foreground" type="java.awt.Color" editor="org.netbeans.beaninfo.editors.ColorEditor">
+                  <Color blue="ff" green="ff" red="ff" type="rgb"/>
+                </Property>
+                <Property name="text" type="java.lang.String" value="Messages"/>
+              </Properties>
+              <Events>
+                <EventHandler event="actionPerformed" listener="java.awt.event.ActionListener" parameters="java.awt.event.ActionEvent" handler="messageBTNActionPerformed"/>
               </Events>
             </Component>
           </SubComponents>
@@ -267,13 +284,13 @@
                                       <Group type="102" alignment="0" attributes="0">
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="jButton1" min="-2" pref="162" max="-2" attributes="0"/>
-                                          <EmptySpace min="-2" pref="24" max="-2" attributes="0"/>
+                                          <EmptySpace min="-2" pref="137" max="-2" attributes="0"/>
                                           <Component id="searchTXT" min="-2" pref="210" max="-2" attributes="0"/>
                                           <EmptySpace max="-2" attributes="0"/>
                                           <Component id="searchBTN" min="-2" pref="34" max="-2" attributes="0"/>
                                       </Group>
                                   </Group>
-                                  <EmptySpace min="0" pref="374" max="32767" attributes="0"/>
+                                  <EmptySpace min="0" pref="261" max="32767" attributes="0"/>
                               </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
@@ -297,10 +314,12 @@
                               <Component id="jLabel5" alignment="3" min="-2" max="-2" attributes="0"/>
                           </Group>
                           <EmptySpace min="-2" pref="35" max="-2" attributes="0"/>
-                          <Group type="103" groupAlignment="3" attributes="0">
-                              <Component id="jButton1" alignment="3" min="-2" pref="42" max="-2" attributes="0"/>
-                              <Component id="searchTXT" alignment="3" min="-2" pref="31" max="-2" attributes="0"/>
-                              <Component id="searchBTN" alignment="3" min="-2" pref="35" max="-2" attributes="0"/>
+                          <Group type="103" groupAlignment="0" attributes="0">
+                              <Component id="searchBTN" alignment="0" min="-2" pref="35" max="-2" attributes="0"/>
+                              <Group type="103" groupAlignment="3" attributes="0">
+                                  <Component id="jButton1" alignment="3" min="-2" pref="42" max="-2" attributes="0"/>
+                                  <Component id="searchTXT" alignment="3" min="-2" pref="31" max="-2" attributes="0"/>
+                              </Group>
                           </Group>
                           <EmptySpace max="-2" attributes="0"/>
                           <Component id="jPanel4" min="-2" max="-2" attributes="0"/>

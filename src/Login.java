@@ -164,7 +164,7 @@ public class Login extends javax.swing.JFrame {
             }
 
             // Update password in the database
-            String updateQuery = "UPDATE accountdetails SET accPassword = ? WHERE accUsername = ?";
+            String updateQuery = "UPDATE users SET accPassword = ? WHERE accUsername = ?";
             PreparedStatement pst = con.prepareStatement(updateQuery);
             pst.setString(1, newPassword);
             pst.setString(2, username);
@@ -426,7 +426,7 @@ public class Login extends javax.swing.JFrame {
         char[] passwordChars = txtLogPassword.getPassword();
         String password = new String(passwordChars);
 
-        String queryLogin = "SELECT Firstname, Lastname, accUsername FROM accountdetails WHERE accUsername = ? AND accPassword = ?";
+        String queryLogin = "SELECT Firstname, Lastname, accUsername FROM users WHERE accUsername = ? AND accPassword = ?";
         PreparedStatement pst = con.prepareStatement(queryLogin);
         pst.setString(1, username);
         pst.setString(2, password);
@@ -437,8 +437,6 @@ public class Login extends javax.swing.JFrame {
             String firstname = rs.getString("Firstname");
             String lastname = rs.getString("Lastname");
             String Username = rs.getString("accUsername");
-
-            JOptionPane.showMessageDialog(null, "Welcome, " + firstname + " " + lastname + "!");
 
             // Create new Homepage with all parameters
             Homepage home = new Homepage(null, firstname, lastname, Username);
@@ -496,7 +494,7 @@ public class Login extends javax.swing.JFrame {
 
     try {
         // Check if the username exists in the database
-        String query = "SELECT accUsername FROM accountdetails WHERE accUsername = ?";
+        String query = "SELECT accUsername FROM users WHERE accUsername = ?";
         PreparedStatement pst = con.prepareStatement(query);
         pst.setString(1, username);
 

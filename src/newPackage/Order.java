@@ -10,9 +10,10 @@ public class Order {
     private int quantity;
     private double totalAmount;
     private String status; // Order status (e.g., pending, shipped, delivered)
+    private String paymentType; // Payment type (e.g., Cash on Delivery, Online Payment)
 
     // Constructor
-    public Order(int orderId, String username, String productName, String storeName, double price, int quantity, double totalAmount, String status) {
+    public Order(int orderId, String username, String productName, String storeName, double price, int quantity, double totalAmount, String status, String paymentType) {
         this.orderId = orderId;
         this.username = username;
         this.productName = productName;
@@ -21,6 +22,7 @@ public class Order {
         this.quantity = quantity;
         this.totalAmount = totalAmount;
         this.status = status;
+        this.paymentType = paymentType;
     }
 
      public void setRated(boolean rated) {
@@ -60,6 +62,10 @@ public class Order {
         return status;
     }
 
+    public String getPaymentType() {
+        return paymentType;
+    }
+
     // Setters
     public void setOrderId(int orderId) {
         this.orderId = orderId;
@@ -94,6 +100,10 @@ public class Order {
         this.status = status;
     }
 
+    public void setPaymentType(String paymentType) {
+        this.paymentType = paymentType;
+    }
+
     // Method to calculate total amount
     public void calculateTotalAmount() {
         this.totalAmount = this.price * this.quantity;
@@ -115,6 +125,7 @@ public class Order {
                 ", quantity=" + quantity +
                 ", totalAmount=" + totalAmount +
                 ", status='" + status + '\'' +
+                ", paymentType='" + paymentType + '\'' +
                 '}';
     }
 }

@@ -19,6 +19,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import javax.swing.ImageIcon;
 import javax.swing.JOptionPane;
+import java.sql.ResultSet;
 
 public class Buypage extends javax.swing.JFrame {
 
@@ -33,6 +34,7 @@ public class Buypage extends javax.swing.JFrame {
         populateProductDetails();
         try {
             Connection();
+            fetchUserDetails();
         } catch (SQLException ex) {
             Logger.getLogger(Buypage.class.getName()).log(Level.SEVERE, null, ex);
         }
@@ -172,6 +174,28 @@ private void setProductImage(byte[] imageData) {
     jLabelimage.setIcon(null);
     jLabelimage.setText("No Image");
 }
+
+private void fetchUserDetails() {
+    try {
+        String query = "SELECT Location, Contacts FROM users WHERE accUsername = ?";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, username);
+        ResultSet rs = pst.executeQuery();
+        
+        if (rs.next()) {
+            String userLocation = rs.getString("Location");
+            String userContact = rs.getString("Contacts");
+            
+            // Update the contact label
+            contactLabel.setText("Contact: " + (userContact != null ? userContact : "Not set"));
+            
+            // Update the location label
+            locationLabel.setText("Location: " + (userLocation != null ? userLocation : "Not set"));
+        }
+    } catch (SQLException ex) {
+        Logger.getLogger(Buypage.class.getName()).log(Level.SEVERE, null, ex);
+    }
+}
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -194,7 +218,7 @@ private void setProductImage(byte[] imageData) {
         Changeaddress = new javax.swing.JButton();
         Cancel = new javax.swing.JButton();
         buyername = new javax.swing.JLabel();
-        contact = new javax.swing.JLabel();
+        contactLabel = new javax.swing.JLabel();
         jPanel5 = new javax.swing.JPanel();
         jLabel7 = new javax.swing.JLabel();
         Time = new javax.swing.JLabel();
@@ -211,6 +235,7 @@ private void setProductImage(byte[] imageData) {
         discounts = new javax.swing.JLabel();
         total = new javax.swing.JLabel();
         PlaceOrder = new javax.swing.JButton();
+        locationLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
 
@@ -327,8 +352,8 @@ private void setProductImage(byte[] imageData) {
         buyername.setForeground(new java.awt.Color(255, 255, 255));
         buyername.setText("buyers name");
 
-        contact.setForeground(new java.awt.Color(255, 255, 255));
-        contact.setText("Contact number");
+        contactLabel.setForeground(new java.awt.Color(255, 255, 255));
+        contactLabel.setText("Contacts");
 
         jPanel5.setBackground(new java.awt.Color(80, 113, 77));
 
@@ -480,41 +505,49 @@ private void setProductImage(byte[] imageData) {
                 .addGap(17, 17, 17))
         );
 
+        locationLabel.setForeground(new java.awt.Color(255, 255, 255));
+        locationLabel.setText("Location");
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                        .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(87, 87, 87)
+                        .addGap(6, 6, 6)
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(contact, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                .addGap(47, 47, 47)
-                                .addComponent(Changeaddress)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(locationLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 283, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                                 .addComponent(Cancel))
-                            .addComponent(buyername, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
-                            .addComponent(jPanel6, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel5, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel4, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(jPanel2, javax.swing.GroupLayout.Alignment.LEADING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                            .addGroup(jPanel1Layout.createSequentialGroup()
+                                .addComponent(buyername, javax.swing.GroupLayout.PREFERRED_SIZE, 79, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(49, 49, 49)
+                                .addComponent(contactLabel, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 63, Short.MAX_VALUE)
+                                .addComponent(Changeaddress)))
+                        .addGap(14, 14, 14)))
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
                 .addContainerGap(8, Short.MAX_VALUE)
-                .addComponent(buyername)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(buyername)
+                    .addComponent(contactLabel)
+                    .addComponent(Changeaddress))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(contact)
-                    .addComponent(Changeaddress)
-                    .addComponent(Cancel))
+                    .addComponent(Cancel)
+                    .addComponent(locationLabel))
                 .addGap(7, 7, 7)
                 .addComponent(jPanel4, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
@@ -550,35 +583,48 @@ private void setProductImage(byte[] imageData) {
     }//GEN-LAST:event_CancelActionPerformed
 
     private void PlaceOrderActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_PlaceOrderActionPerformed
-        // TODO add your handling code here:                                         
-    try {
-        int quantity = (Integer) spinner.getValue();
-        // Update the SQL query to include username
-        String query = "INSERT INTO orders (username, product_name, store_name, price, quantity, total_amount) VALUES (?, ?, ?, ?, ?, ?)";
-        PreparedStatement pst = con.prepareStatement(query);
-        
-        // Set parameters including username
-        pst.setString(1, username);  // Add username as first parameter
-        pst.setString(2, product.getProductName());
-        pst.setString(3, product.getStoreName());
-        pst.setDouble(4, product.getPrice());
-        pst.setInt(5, quantity);
-        pst.setDouble(6, Double.parseDouble(total.getText().replace("₱", "")));
-        
-        int rowsAffected = pst.executeUpdate();
-        
-        if (rowsAffected > 0) {
-            JOptionPane.showMessageDialog(this, "Order Placed Successfully!");
-            this.dispose();
-        } else {
-            JOptionPane.showMessageDialog(this, "Failed to place order");
+        // Show payment method dialog
+        String[] options = {"Cash on Delivery", "Online Payment"};
+        int choice = javax.swing.JOptionPane.showOptionDialog(
+            this,
+            "Choose your payment method:",
+            "Payment Method",
+            javax.swing.JOptionPane.DEFAULT_OPTION,
+            javax.swing.JOptionPane.QUESTION_MESSAGE,
+            null,
+            options,
+            options[0]
+        );
+        if (choice == javax.swing.JOptionPane.CLOSED_OPTION) {
+            // User closed the dialog, do not proceed
+            return;
         }
-    } catch (SQLException ex) {
-        Logger.getLogger(Buypage.class.getName()).log(Level.SEVERE, null, ex);
-        JOptionPane.showMessageDialog(this, "Error Placing Order: " + ex.getMessage());
-    } catch (NumberFormatException ex) {
-        JOptionPane.showMessageDialog(this, "Error parsing total amount");
-    }                                          
+        String paymentMethod = options[choice];
+        try {
+            int quantity = (Integer) spinner.getValue();
+            // Update the SQL query to include username and payment
+            String query = "INSERT INTO orders (username, product_name, store_name, price, quantity, total_amount, payment) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            PreparedStatement pst = con.prepareStatement(query);
+            pst.setString(1, username);  // Add username as first parameter
+            pst.setString(2, product.getProductName());
+            pst.setString(3, product.getStoreName());
+            pst.setDouble(4, product.getPrice());
+            pst.setInt(5, quantity);
+            pst.setDouble(6, Double.parseDouble(total.getText().replace("₱", "")));
+            pst.setString(7, paymentMethod);
+            int rowsAffected = pst.executeUpdate();
+            if (rowsAffected > 0) {
+                javax.swing.JOptionPane.showMessageDialog(this, "Order Placed Successfully!");
+                this.dispose();
+            } else {
+                javax.swing.JOptionPane.showMessageDialog(this, "Failed to place order");
+            }
+        } catch (SQLException ex) {
+            Logger.getLogger(Buypage.class.getName()).log(Level.SEVERE, null, ex);
+            javax.swing.JOptionPane.showMessageDialog(this, "Error Placing Order: " + ex.getMessage());
+        } catch (NumberFormatException ex) {
+            javax.swing.JOptionPane.showMessageDialog(this, "Error parsing total amount");
+        }
     }//GEN-LAST:event_PlaceOrderActionPerformed
 
     /**
@@ -624,7 +670,7 @@ private void setProductImage(byte[] imageData) {
     private javax.swing.JButton PlaceOrder;
     private javax.swing.JLabel Time;
     private javax.swing.JLabel buyername;
-    private javax.swing.JLabel contact;
+    private javax.swing.JLabel contactLabel;
     private javax.swing.JLabel discounts;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
@@ -644,6 +690,7 @@ private void setProductImage(byte[] imageData) {
     private javax.swing.JPanel jPanel4;
     private javax.swing.JPanel jPanel5;
     private javax.swing.JPanel jPanel6;
+    private javax.swing.JLabel locationLabel;
     private javax.swing.JLabel shipping;
     private javax.swing.JSpinner spinner;
     private javax.swing.JLabel subtotal;

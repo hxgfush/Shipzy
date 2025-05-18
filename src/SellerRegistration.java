@@ -14,7 +14,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import javax.swing.JFrame;
 import javax.swing.JOptionPane;
 import java.sql.PreparedStatement;
 
@@ -22,18 +21,14 @@ public class SellerRegistration extends javax.swing.JFrame {
         
         private String username;
         private Homepage homepage;
-        private String firstname;
-        private String lastname;
     /**
      * Creates new form SellerRegistration
      */
-    public SellerRegistration(Homepage Homepage, String Username, String Firstname, String Lastname) {
+    public SellerRegistration(Homepage homepage, String Username) {
          this.username = Username;
-         this.homepage = Homepage;
-         this.firstname = Firstname;
-         this.lastname = Lastname;
+         this.homepage = homepage;
           initComponents();
-        txtName.setText(username);
+
         try {
             Connection();
         } catch (SQLException ex) {
@@ -81,17 +76,8 @@ public class SellerRegistration extends javax.swing.JFrame {
 
         jPanel2 = new javax.swing.JPanel();
         txtStorename = new javax.swing.JTextField();
-        txtLocation = new javax.swing.JTextField();
-        txtId = new javax.swing.JTextField();
-        txtName = new javax.swing.JTextField();
-        txtContact = new javax.swing.JTextField();
         jLabel2 = new javax.swing.JLabel();
-        jLabel3 = new javax.swing.JLabel();
-        jLabel4 = new javax.swing.JLabel();
-        jLabel5 = new javax.swing.JLabel();
-        jLabel6 = new javax.swing.JLabel();
         Confrmbtn = new javax.swing.JButton();
-        jLabel7 = new javax.swing.JLabel();
         jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
@@ -106,48 +92,8 @@ public class SellerRegistration extends javax.swing.JFrame {
             }
         });
 
-        txtLocation.setBackground(new java.awt.Color(255, 255, 255));
-        txtLocation.setForeground(new java.awt.Color(0, 0, 0));
-        txtLocation.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtLocationActionPerformed(evt);
-            }
-        });
-
-        txtId.setBackground(new java.awt.Color(255, 255, 255));
-        txtId.setForeground(new java.awt.Color(0, 0, 0));
-        txtId.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtIdActionPerformed(evt);
-            }
-        });
-
-        txtName.setEditable(false);
-        txtName.setBackground(new java.awt.Color(255, 255, 255));
-        txtName.setForeground(new java.awt.Color(0, 0, 0));
-        txtName.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                txtNameActionPerformed(evt);
-            }
-        });
-
-        txtContact.setBackground(new java.awt.Color(255, 255, 255));
-        txtContact.setForeground(new java.awt.Color(0, 0, 0));
-
         jLabel2.setForeground(new java.awt.Color(255, 255, 255));
         jLabel2.setText("Store Name:");
-
-        jLabel3.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel3.setText("Location:");
-
-        jLabel4.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel4.setText("Seller ID:");
-
-        jLabel5.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel5.setText("Name:");
-
-        jLabel6.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel6.setText("Contact:");
 
         Confrmbtn.setBackground(new java.awt.Color(69, 125, 88));
         Confrmbtn.setForeground(new java.awt.Color(255, 255, 255));
@@ -155,16 +101,6 @@ public class SellerRegistration extends javax.swing.JFrame {
         Confrmbtn.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 ConfrmbtnActionPerformed(evt);
-            }
-        });
-
-        jLabel7.setFont(new java.awt.Font("Segoe UI", 0, 10)); // NOI18N
-        jLabel7.setForeground(new java.awt.Color(255, 255, 255));
-        jLabel7.setText("Already Registerd as a Seller?");
-        jLabel7.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
-        jLabel7.addMouseListener(new java.awt.event.MouseAdapter() {
-            public void mouseClicked(java.awt.event.MouseEvent evt) {
-                jLabel7MouseClicked(evt);
             }
         });
 
@@ -180,27 +116,19 @@ public class SellerRegistration extends javax.swing.JFrame {
                 .addGap(20, 20, 20)
                 .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel2Layout.createSequentialGroup()
-                        .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addComponent(jLabel2)
-                            .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 167, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel6, javax.swing.GroupLayout.PREFERRED_SIZE, 67, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addContainerGap(92, Short.MAX_VALUE))
+                        .addComponent(jLabel2)
+                        .addContainerGap(194, Short.MAX_VALUE))
                     .addGroup(jPanel2Layout.createSequentialGroup()
                         .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(jLabel1)
                             .addGroup(jPanel2Layout.createSequentialGroup()
                                 .addGap(20, 20, 20)
-                                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(txtStorename, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtId, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtName, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(txtContact, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(Confrmbtn, javax.swing.GroupLayout.Alignment.TRAILING)))
-                            .addComponent(jLabel4, javax.swing.GroupLayout.PREFERRED_SIZE, 71, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel3, javax.swing.GroupLayout.PREFERRED_SIZE, 74, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(jLabel5, javax.swing.GroupLayout.PREFERRED_SIZE, 66, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addComponent(txtStorename, javax.swing.GroupLayout.PREFERRED_SIZE, 211, javax.swing.GroupLayout.PREFERRED_SIZE)))
                         .addGap(0, 0, Short.MAX_VALUE))))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel2Layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(Confrmbtn, javax.swing.GroupLayout.PREFERRED_SIZE, 180, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(45, 45, 45))
         );
         jPanel2Layout.setVerticalGroup(
             jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -210,27 +138,9 @@ public class SellerRegistration extends javax.swing.JFrame {
                 .addComponent(jLabel2)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                 .addComponent(txtStorename, javax.swing.GroupLayout.PREFERRED_SIZE, 30, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel3)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtLocation, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel4)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtId, javax.swing.GroupLayout.PREFERRED_SIZE, 31, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel5)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtName, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(jLabel6)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(txtContact, javax.swing.GroupLayout.PREFERRED_SIZE, 32, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(jPanel2Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel7, javax.swing.GroupLayout.PREFERRED_SIZE, 27, javax.swing.GroupLayout.PREFERRED_SIZE)
-                    .addComponent(Confrmbtn))
-                .addGap(77, 77, 77))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(Confrmbtn, javax.swing.GroupLayout.PREFERRED_SIZE, 38, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(59, 59, 59))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -247,93 +157,43 @@ public class SellerRegistration extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void jLabel7MouseClicked(java.awt.event.MouseEvent evt) {//GEN-FIRST:event_jLabel7MouseClicked
-
-            // TODO add your handling code here:
-         String Username = username;
-         String Firstname = firstname;
-         String Lastname = lastname;
-        var sellerhop = new SellerHopIn(homepage, Username, Firstname, Lastname);
-        sellerhop.setVisible(true);
-        sellerhop.pack();
-        sellerhop.setLocationRelativeTo(null);
-        this.dispose();
-    }//GEN-LAST:event_jLabel7MouseClicked
-
     private void ConfrmbtnActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_ConfrmbtnActionPerformed
          // Get input values from the text fields
-    String storename = txtStorename.getText().trim();
-    String location = txtLocation.getText().trim();
-    String sellerid = txtId.getText().trim();
-    String name = txtName.getText().trim();
-    String contact = txtContact.getText().trim();
+      String storename = txtStorename.getText().trim();
+
+    if (storename.isEmpty()) {
+        JOptionPane.showMessageDialog(this, "Store name cannot be empty", "Error", JOptionPane.ERROR_MESSAGE);
+        return;
+    }
 
     try {
-        // Validate required fields
-        if (storename.isEmpty()) {
-            JOptionPane.showMessageDialog(new JFrame(), "Store Name is required.");
-            return;
-        }
-        if (location.isEmpty()) {
-            JOptionPane.showMessageDialog(new JFrame(), "Location is required.");
-            return;
-        }
-        if (sellerid.isEmpty()) {
-            JOptionPane.showMessageDialog(new JFrame(), "Seller ID is required.");
-            return;
-        }
-        if (name.isEmpty()) {
-            JOptionPane.showMessageDialog(new JFrame(), "Seller Name is required.");
-            return;
-        }
-        if (contact.isEmpty()) {
-            JOptionPane.showMessageDialog(new JFrame(), "Contact is required.");
-            return;
-        }
+        String query = "UPDATE users SET Store_name = ? WHERE accUsername = ?";
+        PreparedStatement pst = con.prepareStatement(query);
+        pst.setString(1, storename);
+        pst.setString(2, username);
 
-        // Insert data into the sellermanager table
-        PreparedStatement pst = con.prepareStatement(
-            "INSERT INTO sellermanager (Storename, Location, Sellerid, Name, Contact, Username) VALUES (?, ?, ?, ?, ?, ?)"
-        );
-        pst.setString(1, storename);  // Store name
-        pst.setString(2, location);  // Location
-        pst.setString(3, sellerid);  // Seller ID
-        pst.setString(4, name);      // Name
-        pst.setString(5, contact);   // Contact
-        pst.setString(6, username);  // Username (logged-in user)
+        int rowsAffected = pst.executeUpdate();
 
-        int k = pst.executeUpdate();
-
-        if (k == 1) {
-            JOptionPane.showMessageDialog(this, "Registered Successfully!");
-            // Clear the form fields
-            txtStorename.setText("");
-            txtLocation.setText("");
-            txtId.setText("");
-            txtName.setText("");
-            txtContact.setText("");
+        if (rowsAffected > 0) {
+            JOptionPane.showMessageDialog(this, "Store registered successfully!");
+            if (homepage != null) {  // Add null check
+                homepage.updateSellerButton(true);
+            }
+            this.dispose();
         } else {
-            JOptionPane.showMessageDialog(this, "Registration failed. Please try again.");
+            JOptionPane.showMessageDialog(this, 
+                "Failed to register store. User not found.",
+                "Error", JOptionPane.ERROR_MESSAGE);
         }
-
+        
         pst.close();
     } catch (SQLException ex) {
         Logger.getLogger(SellerRegistration.class.getName()).log(Level.SEVERE, null, ex);
-        JOptionPane.showMessageDialog(this, "Database error: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+        JOptionPane.showMessageDialog(this, 
+            "Database error: " + ex.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
     }
     }//GEN-LAST:event_ConfrmbtnActionPerformed
-
-    private void txtNameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtNameActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtNameActionPerformed
-
-    private void txtIdActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtIdActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtIdActionPerformed
-
-    private void txtLocationActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtLocationActionPerformed
-        // TODO add your handling code here:
-    }//GEN-LAST:event_txtLocationActionPerformed
 
     private void txtStorenameActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_txtStorenameActionPerformed
         // TODO add your handling code here:
@@ -370,9 +230,7 @@ public class SellerRegistration extends javax.swing.JFrame {
         java.awt.EventQueue.invokeLater(new Runnable() {
             public void run() {
                 String Username = null;
-                String Firstname = null;
-                String Lastname = null;
-                new SellerRegistration(homepage, Username, Firstname, Lastname).setVisible(true);
+                new SellerRegistration(homepage, Username).setVisible(true);
             }
         });
     }
@@ -381,16 +239,7 @@ public class SellerRegistration extends javax.swing.JFrame {
     private javax.swing.JButton Confrmbtn;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
-    private javax.swing.JLabel jLabel3;
-    private javax.swing.JLabel jLabel4;
-    private javax.swing.JLabel jLabel5;
-    private javax.swing.JLabel jLabel6;
-    private javax.swing.JLabel jLabel7;
     private javax.swing.JPanel jPanel2;
-    private javax.swing.JTextField txtContact;
-    private javax.swing.JTextField txtId;
-    private javax.swing.JTextField txtLocation;
-    private javax.swing.JTextField txtName;
     private javax.swing.JTextField txtStorename;
     // End of variables declaration//GEN-END:variables
 }
